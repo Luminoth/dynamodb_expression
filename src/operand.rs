@@ -22,25 +22,15 @@ pub enum ValueBuilder {
     String(String),
 }
 
-impl ValueBuilder {
-    pub fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        plus(self, right)
-    }
-
-    pub fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        minus(self, right)
-    }
-
-    pub fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        list_append(self, right)
-    }
-}
-
 impl OperandBuilder for ValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         Ok(Operand {})
     }
 }
+
+impl PlusBuilder for ValueBuilder {}
+impl MinusBuilder for ValueBuilder {}
+impl ListAppendBuilder for ValueBuilder {}
 
 pub fn bool_value(value: bool) -> Box<ValueBuilder> {
     ValueBuilder::Bool(value).into_boxed()
@@ -67,18 +57,6 @@ impl NameBuilder {
         SizeBuilder { name_builder: self }.into_boxed()
     }
 
-    pub fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        plus(self, right)
-    }
-
-    pub fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        minus(self, right)
-    }
-
-    pub fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
-        list_append(self, right)
-    }
-
     pub fn if_not_exists(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         if_not_exists(self, right)
     }
@@ -89,6 +67,10 @@ impl OperandBuilder for NameBuilder {
         Ok(Operand {})
     }
 }
+
+impl PlusBuilder for NameBuilder {}
+impl MinusBuilder for NameBuilder {}
+impl ListAppendBuilder for NameBuilder {}
 
 pub fn name(name: impl Into<String>) -> Box<NameBuilder> {
     NameBuilder { name: name.into() }.into_boxed()
@@ -123,11 +105,38 @@ pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
 }
 
 enum SetValueMode {
-    Unset,
+    //Unset,
     Plus,
     Minus,
     ListAppend,
     IfNotExists,
+}
+
+trait PlusBuilder: OperandBuilder {
+    fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        plus(self, right)
+    }
+}
+
+trait MinusBuilder: OperandBuilder {
+    fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        minus(self, right)
+    }
+}
+
+trait ListAppendBuilder: OperandBuilder {
+    fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        list_append(self, right)
+    }
 }
 
 pub struct SetValueBuilder {

@@ -15,6 +15,7 @@ pub trait OperandBuilder {
     }
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub enum ValueBuilder {
     Bool(bool),
     Int(i64),
@@ -104,39 +105,13 @@ pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
     KeyBuilder { key: key.into() }.into_boxed()
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum SetValueMode {
     //Unset,
     Plus,
     Minus,
     ListAppend,
     IfNotExists,
-}
-
-trait PlusBuilder: OperandBuilder {
-    fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
-    where
-        Self: Sized + 'static,
-    {
-        plus(self, right)
-    }
-}
-
-trait MinusBuilder: OperandBuilder {
-    fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
-    where
-        Self: Sized + 'static,
-    {
-        minus(self, right)
-    }
-}
-
-trait ListAppendBuilder: OperandBuilder {
-    fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
-    where
-        Self: Sized + 'static,
-    {
-        list_append(self, right)
-    }
 }
 
 pub struct SetValueBuilder {
@@ -197,6 +172,33 @@ pub fn if_not_exists(
         mode: SetValueMode::IfNotExists,
     }
     .into_boxed()
+}
+
+trait PlusBuilder: OperandBuilder {
+    fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        plus(self, right)
+    }
+}
+
+trait MinusBuilder: OperandBuilder {
+    fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        minus(self, right)
+    }
+}
+
+trait ListAppendBuilder: OperandBuilder {
+    fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
+    where
+        Self: Sized + 'static,
+    {
+        list_append(self, right)
+    }
 }
 
 #[cfg(test)]

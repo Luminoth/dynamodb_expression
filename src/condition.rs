@@ -2,6 +2,7 @@ use crate::{string_value, NameBuilder, OperandBuilder, SizeBuilder, ValueBuilder
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
 
+#[derive(PartialEq)]
 enum ConditionMode {
     //Unset,
     Equal,
@@ -22,83 +23,7 @@ enum ConditionMode {
     Contains,
 }
 
-trait EqualBuilder: OperandBuilder {
-    fn equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        equal(self, right)
-    }
-}
-
-trait NotEqualBuilder: OperandBuilder {
-    fn not_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        not_equal(self, right)
-    }
-}
-
-trait LessThanBuilder: OperandBuilder {
-    fn less_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        less_than(self, right)
-    }
-}
-
-trait LessThanEqualBuilder: OperandBuilder {
-    fn less_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        less_than_equal(self, right)
-    }
-}
-
-trait GreaterThanBuilder: OperandBuilder {
-    fn greater_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        greater_than(self, right)
-    }
-}
-
-trait GreaterThanEqualBuilder: OperandBuilder {
-    fn greater_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        greater_than_equal(self, right)
-    }
-}
-
-trait BetweenBuilder: OperandBuilder {
-    fn between(
-        self: Box<Self>,
-        upper: Box<dyn OperandBuilder>,
-        lower: Box<dyn OperandBuilder>,
-    ) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        between(self, upper, lower)
-    }
-}
-
-trait InBuilder: OperandBuilder {
-    fn r#in(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
-    where
-        Self: Sized + 'static,
-    {
-        r#in(self, right)
-    }
-}
-
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum DynamoDBAttributeType {
     String,
     StringSet,
@@ -136,15 +61,15 @@ pub struct ConditionBuilder {
 }
 
 impl ConditionBuilder {
-    fn and(self, right: ConditionBuilder) -> ConditionBuilder {
+    pub fn and(self, right: ConditionBuilder) -> ConditionBuilder {
         and(self, right)
     }
 
-    fn or(self, right: ConditionBuilder) -> ConditionBuilder {
+    pub fn or(self, right: ConditionBuilder) -> ConditionBuilder {
         or(self, right)
     }
 
-    fn not(self) -> ConditionBuilder {
+    pub fn not(self) -> ConditionBuilder {
         not(self)
     }
 }
@@ -299,6 +224,82 @@ pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionB
         operand_list: Some(vec![name, v]),
         condition_list: None,
         mode: ConditionMode::Contains,
+    }
+}
+
+trait EqualBuilder: OperandBuilder {
+    fn equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        equal(self, right)
+    }
+}
+
+trait NotEqualBuilder: OperandBuilder {
+    fn not_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        not_equal(self, right)
+    }
+}
+
+trait LessThanBuilder: OperandBuilder {
+    fn less_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        less_than(self, right)
+    }
+}
+
+trait LessThanEqualBuilder: OperandBuilder {
+    fn less_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        less_than_equal(self, right)
+    }
+}
+
+trait GreaterThanBuilder: OperandBuilder {
+    fn greater_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        greater_than(self, right)
+    }
+}
+
+trait GreaterThanEqualBuilder: OperandBuilder {
+    fn greater_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        greater_than_equal(self, right)
+    }
+}
+
+trait BetweenBuilder: OperandBuilder {
+    fn between(
+        self: Box<Self>,
+        upper: Box<dyn OperandBuilder>,
+        lower: Box<dyn OperandBuilder>,
+    ) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        between(self, upper, lower)
+    }
+}
+
+trait InBuilder: OperandBuilder {
+    fn r#in(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    where
+        Self: Sized + 'static,
+    {
+        r#in(self, right)
     }
 }
 

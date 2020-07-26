@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder};
+use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go
 
@@ -10,7 +10,7 @@ enum ExpressionType {
     KeyCondition,
     Condition,
     Filter,
-    //Update,
+    Update,
 }
 
 pub struct Expression {
@@ -85,12 +85,12 @@ impl Builder {
         self
     }
 
-    /*pub fn with_update(mut self, update_builder: UpdateBuilder) -> Builder {
+    pub fn with_update(mut self, update_builder: UpdateBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Update, Box::new(update_builder));
 
         self
-    }*/
+    }
 
     pub fn build() -> anyhow::Result<Expression> {
         unimplemented!("Builder::build")

@@ -14,7 +14,7 @@ impl ProjectionBuilder {
 
 impl TreeBuilder for ProjectionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
-        unimplemented!("ConditionBuilder::build_tree")
+        unimplemented!("ProjectionBuilder::build_tree")
     }
 }
 

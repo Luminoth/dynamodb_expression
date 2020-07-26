@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{ConditionBuilder, KeyConditionBuilder};
+use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go
 
 #[derive(Hash, Eq, PartialEq, Debug)]
 enum ExpressionType {
-    //Projection,
+    Projection,
     KeyCondition,
     Condition,
     Filter,
@@ -62,12 +62,12 @@ impl Builder {
         self
     }
 
-    /*pub fn with_projection(mut self, projection_builder: ProjectionBuilder) -> Builder {
+    pub fn with_projection(mut self, projection_builder: ProjectionBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Projection, Box::new(projection_builder));
 
         self
-    }*/
+    }
 
     pub fn with_key_condition(mut self, key_condition_builder: KeyConditionBuilder) -> Builder {
         self.expressions.insert(

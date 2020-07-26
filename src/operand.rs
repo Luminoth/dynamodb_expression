@@ -5,44 +5,57 @@ pub struct Operand {
 }
 
 pub trait OperandBuilder {
-    fn build_operand() -> anyhow::Result<Operand>;
-}
+    fn build_operand(&self) -> anyhow::Result<Operand>;
 
-pub struct ValueBuilder<T> {
-    value: T,
-}
-
-impl<T> ValueBuilder<T> {
-    pub fn plus<R>(self, right: R) -> SetValueBuilder<ValueBuilder<T>, R>
+    fn into_boxed(self) -> Box<Self>
     where
-        R: OperandBuilder,
+        Self: Sized,
     {
+        Box::new(self)
+    }
+}
+
+pub enum ValueBuilder {
+    Bool(bool),
+    Int(i64),
+    Float(f64),
+    String(String),
+}
+
+impl ValueBuilder {
+    pub fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         plus(self, right)
     }
 
-    pub fn minus<R>(self, right: R) -> SetValueBuilder<ValueBuilder<T>, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         minus(self, right)
     }
 
-    pub fn list_append<R>(self, right: R) -> SetValueBuilder<ValueBuilder<T>, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         list_append(self, right)
     }
 }
 
-impl<T> OperandBuilder for ValueBuilder<T> {
-    fn build_operand() -> anyhow::Result<Operand> {
+impl OperandBuilder for ValueBuilder {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
         Ok(Operand {})
     }
 }
 
-pub fn value<T>(value: T) -> ValueBuilder<T> {
-    ValueBuilder { value }
+pub fn bool_value(value: bool) -> Box<ValueBuilder> {
+    ValueBuilder::Bool(value).into_boxed()
+}
+
+pub fn int_value(value: i64) -> Box<ValueBuilder> {
+    ValueBuilder::Int(value).into_boxed()
+}
+
+pub fn float_value(value: f64) -> Box<ValueBuilder> {
+    ValueBuilder::Float(value).into_boxed()
+}
+
+pub fn string_value(value: impl Into<String>) -> Box<ValueBuilder> {
+    ValueBuilder::String(value.into()).into_boxed()
 }
 
 pub struct NameBuilder {
@@ -50,63 +63,48 @@ pub struct NameBuilder {
 }
 
 impl NameBuilder {
-    pub fn size(self) -> SizeBuilder {
-        SizeBuilder { name_builder: self }
+    pub fn size(self: Box<Self>) -> Box<SizeBuilder> {
+        SizeBuilder { name_builder: self }.into_boxed()
     }
 
-    pub fn plus<R>(self, right: R) -> SetValueBuilder<NameBuilder, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         plus(self, right)
     }
 
-    pub fn minus<R>(self, right: R) -> SetValueBuilder<NameBuilder, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         minus(self, right)
     }
 
-    pub fn list_append<R>(self, right: R) -> SetValueBuilder<NameBuilder, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         list_append(self, right)
     }
 
-    pub fn if_not_exists<R>(self, right: R) -> SetValueBuilder<NameBuilder, R>
-    where
-        R: OperandBuilder,
-    {
+    pub fn if_not_exists(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
         if_not_exists(self, right)
     }
 }
 
 impl OperandBuilder for NameBuilder {
-    fn build_operand() -> anyhow::Result<Operand> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
         Ok(Operand {})
     }
 }
 
-pub fn name<S>(name: S) -> NameBuilder
-where
-    S: Into<String>,
-{
-    NameBuilder { name: name.into() }
+pub fn name(name: impl Into<String>) -> Box<NameBuilder> {
+    NameBuilder { name: name.into() }.into_boxed()
 }
 
 pub struct SizeBuilder {
-    name_builder: NameBuilder,
+    name_builder: Box<NameBuilder>,
 }
 
 impl OperandBuilder for SizeBuilder {
-    fn build_operand() -> anyhow::Result<Operand> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
         Ok(Operand {})
     }
 }
 
-pub fn size(name_builder: NameBuilder) -> SizeBuilder {
+pub fn size(name_builder: Box<NameBuilder>) -> Box<SizeBuilder> {
     name_builder.size()
 }
 
@@ -115,16 +113,13 @@ pub struct KeyBuilder {
 }
 
 impl OperandBuilder for KeyBuilder {
-    fn build_operand() -> anyhow::Result<Operand> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
         Ok(Operand {})
     }
 }
 
-pub fn key<S>(key: S) -> KeyBuilder
-where
-    S: Into<String>,
-{
-    KeyBuilder { key: key.into() }
+pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
+    KeyBuilder { key: key.into() }.into_boxed()
 }
 
 enum SetValueMode {
@@ -135,61 +130,64 @@ enum SetValueMode {
     IfNotExists,
 }
 
-pub struct SetValueBuilder<L, R>
-where
-    L: OperandBuilder,
-    R: OperandBuilder,
-{
-    left_operand: L,
-    right_operand: R,
+pub struct SetValueBuilder {
+    left_operand: Box<dyn OperandBuilder>,
+    right_operand: Box<dyn OperandBuilder>,
     mode: SetValueMode,
 }
 
-pub fn plus<L, R>(left_operand: L, right_operand: R) -> SetValueBuilder<L, R>
-where
-    L: OperandBuilder,
-    R: OperandBuilder,
-{
+impl OperandBuilder for SetValueBuilder {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        Ok(Operand {})
+    }
+}
+
+pub fn plus(
+    left_operand: Box<dyn OperandBuilder>,
+    right_operand: Box<dyn OperandBuilder>,
+) -> Box<SetValueBuilder> {
     SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::Plus,
     }
+    .into_boxed()
 }
 
-pub fn minus<L, R>(left_operand: L, right_operand: R) -> SetValueBuilder<L, R>
-where
-    L: OperandBuilder,
-    R: OperandBuilder,
-{
+pub fn minus(
+    left_operand: Box<dyn OperandBuilder>,
+    right_operand: Box<dyn OperandBuilder>,
+) -> Box<SetValueBuilder> {
     SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::Minus,
     }
+    .into_boxed()
 }
 
-pub fn list_append<L, R>(left_operand: L, right_operand: R) -> SetValueBuilder<L, R>
-where
-    L: OperandBuilder,
-    R: OperandBuilder,
-{
+pub fn list_append(
+    left_operand: Box<dyn OperandBuilder>,
+    right_operand: Box<dyn OperandBuilder>,
+) -> Box<SetValueBuilder> {
     SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::ListAppend,
     }
+    .into_boxed()
 }
 
-pub fn if_not_exists<R>(name: NameBuilder, value: R) -> SetValueBuilder<NameBuilder, R>
-where
-    R: OperandBuilder,
-{
+pub fn if_not_exists(
+    name: Box<NameBuilder>,
+    value: Box<dyn OperandBuilder>,
+) -> Box<SetValueBuilder> {
     SetValueBuilder {
-        left_operand: name,
+        left_operand: name.into_boxed(),
         right_operand: value,
         mode: SetValueMode::IfNotExists,
     }
+    .into_boxed()
 }
 
 #[cfg(test)]
@@ -199,7 +197,7 @@ fn test_name_builder() {
 
 #[cfg(test)]
 fn test_value_builder() {
-    let builder = value("test");
+    let builder = ValueBuilder::String("test".to_owned());
 }
 
 #[cfg(test)]
@@ -218,40 +216,40 @@ fn test_size_builder() {
 fn test_size_builder_plus() {
     // TODO: set()
 
-    let expr = plus(value(10), value(5));
+    let expr = plus(int_value(10), int_value(5));
 
-    let expr = name("test").plus(value(10));
+    let expr = name("test").plus(int_value(10));
 
-    let expr = value(10).plus(value(5));
+    let expr = int_value(10).plus(int_value(5));
 }
 
 #[cfg(test)]
 fn test_size_builder_minus() {
     // TODO: set()
 
-    let expr = minus(value(10), value(5));
+    let expr = minus(int_value(10), int_value(5));
 
-    let expr = name("test").minus(value(10));
+    let expr = name("test").minus(int_value(10));
 
-    let expr = value(10).minus(value(5));
+    let expr = int_value(10).minus(int_value(5));
 }
 
 #[cfg(test)]
 fn test_size_builder_list_append() {
     // TODO: set()
 
-    let expr = list_append(value(10), value(5));
+    let expr = list_append(int_value(10), int_value(5));
 
-    let expr = name("test").list_append(value(10));
+    let expr = name("test").list_append(int_value(10));
 
-    let expr = value(10).list_append(value(5));
+    let expr = int_value(10).list_append(int_value(5));
 }
 
 #[cfg(test)]
 fn test_size_builder_if_not_exists() {
     // TODO: set()
 
-    let expr = if_not_exists(name("test"), value(0));
+    let expr = if_not_exists(name("test"), int_value(0));
 
-    let expr = name("test").if_not_exists(value(10));
+    let expr = name("test").if_not_exists(int_value(10));
 }

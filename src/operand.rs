@@ -1,7 +1,9 @@
+use crate::ExpressionNode;
+
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
 pub struct Operand {
-    //exprNode: ExpressionNode,
+    expression_node: ExpressionNode,
 }
 
 pub trait OperandBuilder {
@@ -25,7 +27,7 @@ pub enum ValueBuilder {
 
 impl OperandBuilder for ValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        Ok(Operand {})
+        unimplemented!("ValueBuilder::build_operand()")
     }
 }
 
@@ -65,7 +67,7 @@ impl NameBuilder {
 
 impl OperandBuilder for NameBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        Ok(Operand {})
+        unimplemented!("NameBuilder::build_operand()")
     }
 }
 
@@ -83,7 +85,7 @@ pub struct SizeBuilder {
 
 impl OperandBuilder for SizeBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        Ok(Operand {})
+        unimplemented!("SizeBuilder::build_operand()")
     }
 }
 
@@ -97,7 +99,7 @@ pub struct KeyBuilder {
 
 impl OperandBuilder for KeyBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        Ok(Operand {})
+        unimplemented!("KeyBuilder::build_operand()")
     }
 }
 
@@ -122,7 +124,7 @@ pub struct SetValueBuilder {
 
 impl OperandBuilder for SetValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        Ok(Operand {})
+        unimplemented!("SetValueBuilder::build_operand()")
     }
 }
 

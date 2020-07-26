@@ -1,4 +1,7 @@
-use crate::{string_value, NameBuilder, OperandBuilder, SizeBuilder, ValueBuilder};
+use crate::{
+    string_value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder,
+    ValueBuilder,
+};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
 
@@ -71,6 +74,12 @@ impl ConditionBuilder {
 
     pub fn not(self) -> ConditionBuilder {
         not(self)
+    }
+}
+
+impl TreeBuilder for ConditionBuilder {
+    fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
+        unimplemented!("ConditionBuilder::build_tree")
     }
 }
 

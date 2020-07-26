@@ -1,4 +1,4 @@
-use crate::{string_value, KeyBuilder, OperandBuilder, ValueBuilder};
+use crate::{string_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
 
@@ -25,6 +25,12 @@ pub struct KeyConditionBuilder {
 impl KeyConditionBuilder {
     pub fn and(self, right: KeyConditionBuilder) -> KeyConditionBuilder {
         key_and(self, right)
+    }
+}
+
+impl TreeBuilder for KeyConditionBuilder {
+    fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
+        unimplemented!("ConditionBuilder::build_tree")
     }
 }
 

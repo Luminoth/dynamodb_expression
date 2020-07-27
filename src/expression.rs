@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use rusoto_dynamodb::AttributeValue;
+
 use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go
@@ -16,7 +18,7 @@ enum ExpressionType {
 pub struct Expression {
     expressions: HashMap<ExpressionType, String>,
     names: HashMap<String, String>,
-    //values: HashMap<String, dynamodb.AttributeValue>,
+    values: HashMap<String, AttributeValue>,
 }
 
 impl Expression {
@@ -44,9 +46,9 @@ impl Expression {
         &self.names
     }
 
-    /*pub fn values(&self) -> &HashMap<String, dynamodb.AttributeValue> {
+    pub fn values(&self) -> &HashMap<String, AttributeValue> {
         &self.values
-    }*/
+    }
 }
 
 #[derive(Default)]
@@ -103,7 +105,7 @@ pub(crate) trait TreeBuilder {
 
 pub(crate) struct ExpressionNode {
     names: Vec<String>,
-    //values: Vec<dynamodb.AttributeValue>,
+    values: Vec<AttributeValue>,
     children: Vec<ExpressionNode>,
     fmt_expression: String,
 }

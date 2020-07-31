@@ -1,3 +1,5 @@
+//#![deny(warnings)]
+
 mod condition;
 mod expression;
 mod key_condition;

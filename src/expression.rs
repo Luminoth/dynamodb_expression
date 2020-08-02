@@ -114,6 +114,7 @@ impl Builder {
 
         if alias_list.names.len() != 0 {
             let names = HashMap::new();
+            unimplemented!("Builder::build");
             /*for ind, val := range aliasList.namesList {
                 namesMap[fmt.Sprintf("#%v", ind)] = aws.String(val)
             }*/
@@ -122,6 +123,7 @@ impl Builder {
 
         if alias_list.values.len() != 0 {
             let values = HashMap::new();
+            unimplemented!("Builder::build");
             /*for i := 0; i < len(aliasList.valuesList); i++ {
                 valuesMap[fmt.Sprintf(":%v", i)] = &aliasList.valuesList[i]
             }*/
@@ -185,10 +187,19 @@ pub(crate) struct ExpressionNode {
     names: Vec<String>,
     values: Vec<AttributeValue>,
     children: Vec<ExpressionNode>,
-    fmt_expression: String,
+    pub(crate) fmt_expression: String,
 }
 
 impl ExpressionNode {
+    pub fn new(children: Vec<ExpressionNode>) -> Self {
+        Self {
+            names: Vec::new(),
+            values: Vec::new(),
+            children,
+            fmt_expression: String::default(),
+        }
+    }
+
     fn build_expression_string(&self, alias_list: &mut AliasList) -> anyhow::Result<String> {
         // Since each exprNode contains a slice of names, values, and children that
         // correspond to the escaped characters, we an index to traverse the slices

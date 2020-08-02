@@ -30,7 +30,7 @@ impl KeyConditionBuilder {
 
 impl TreeBuilder for KeyConditionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
-        unimplemented!("ConditionBuilder::build_tree")
+        unimplemented!("KeyConditionBuilder::build_tree")
     }
 }
 

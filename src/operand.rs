@@ -3,7 +3,7 @@ use crate::ExpressionNode;
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
 pub struct Operand {
-    expression_node: ExpressionNode,
+    pub(crate) expression_node: ExpressionNode,
 }
 
 pub trait OperandBuilder {

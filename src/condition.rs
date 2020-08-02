@@ -1,3 +1,5 @@
+use anyhow::bail;
+
 use crate::{
     string_value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder,
     ValueBuilder,
@@ -5,7 +7,7 @@ use crate::{
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
 
-#[derive(PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum ConditionMode {
     //Unset,
     Equal,
@@ -58,8 +60,8 @@ impl DynamoDBAttributeType {
 }
 
 pub struct ConditionBuilder {
-    operand_list: Option<Vec<Box<dyn OperandBuilder>>>,
-    condition_list: Option<Vec<ConditionBuilder>>,
+    operand_list: Vec<Box<dyn OperandBuilder>>,
+    condition_list: Vec<ConditionBuilder>,
     mode: ConditionMode,
 }
 
@@ -75,18 +77,93 @@ impl ConditionBuilder {
     pub fn not(self) -> ConditionBuilder {
         not(self)
     }
+
+    fn build_child_nodes(&self) -> anyhow::Result<Vec<ExpressionNode>> {
+        let mut child_nodes = Vec::new();
+
+        for condition in self.condition_list.iter() {
+            let node = condition.build_tree()?;
+            child_nodes.push(node);
+        }
+
+        for ope in self.operand_list.iter() {
+            let operand = ope.build_operand()?;
+            child_nodes.push(operand.expression_node);
+        }
+
+        Ok(child_nodes)
+    }
+
+    fn compare_build_condition(
+        mode: ConditionMode,
+        mut node: ExpressionNode,
+    ) -> anyhow::Result<ExpressionNode> {
+        match mode {
+            ConditionMode::Equal => node.fmt_expression = "$c = $c".to_owned(),
+            ConditionMode::NotEqual => node.fmt_expression = "$c <> $c".to_owned(),
+            ConditionMode::LessThan => node.fmt_expression = "$c < $c".to_owned(),
+            ConditionMode::LessThanEqual => node.fmt_expression = "$c <= $c".to_owned(),
+            ConditionMode::GreaterThan => node.fmt_expression = "$c > $c".to_owned(),
+            ConditionMode::GreaterThanEqual => node.fmt_expression = "$c >= $c".to_owned(),
+            _ => bail!(
+                "build compare condition error: unsupported mode: {:?}",
+                mode
+            ),
+        }
+        Ok(node)
+    }
+
+    fn compound_build_condition(
+        condition_builder: &ConditionBuilder,
+        mut node: ExpressionNode,
+    ) -> anyhow::Result<ExpressionNode> {
+        // create a string with escaped characters to substitute them with proper
+        // aliases during runtime
+        let mode = match condition_builder.mode {
+            ConditionMode::And => " AND ",
+            ConditionMode::Or => " OR ",
+            _ => bail!(
+                "build compound condition error: unsupported mode: {:?}",
+                condition_builder.mode
+            ),
+        };
+
+        node.fmt_expression = format!(
+            "{}{}",
+            "($c)",
+            format!("{}{}", mode, "($c)").repeat(condition_builder.condition_list.len() - 1)
+        );
+
+        Ok(node)
+    }
 }
 
 impl TreeBuilder for ConditionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
-        unimplemented!("ConditionBuilder::build_tree")
+        let child_nodes = self.build_child_nodes()?;
+        let ret = ExpressionNode::new(child_nodes);
+
+        match self.mode {
+            ConditionMode::Equal
+            | ConditionMode::NotEqual
+            | ConditionMode::LessThan
+            | ConditionMode::LessThanEqual
+            | ConditionMode::GreaterThan
+            | ConditionMode::GreaterThanEqual => {
+                Ok(ConditionBuilder::compare_build_condition(self.mode, ret)?)
+            }
+            ConditionMode::And | ConditionMode::Or => {
+                Ok(ConditionBuilder::compound_build_condition(self, ret)?)
+            }
+            _ => unimplemented!("ConditionBuidler::build_tree()"),
+        }
     }
 }
 
 pub fn equal(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::Equal,
     }
 }
@@ -96,8 +173,8 @@ pub fn not_equal(
     right: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::NotEqual,
     }
 }
@@ -107,8 +184,8 @@ pub fn less_than(
     right: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::LessThan,
     }
 }
@@ -118,8 +195,8 @@ pub fn less_than_equal(
     right: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::LessThanEqual,
     }
 }
@@ -129,8 +206,8 @@ pub fn greater_than(
     right: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::GreaterThan,
     }
 }
@@ -140,32 +217,32 @@ pub fn greater_than_equal(
     right: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::GreaterThanEqual,
     }
 }
 
 pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: None,
-        condition_list: Some(vec![left, right]),
+        operand_list: Vec::new(),
+        condition_list: vec![left, right],
         mode: ConditionMode::And,
     }
 }
 
 pub fn or(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: None,
-        condition_list: Some(vec![left, right]),
+        operand_list: Vec::new(),
+        condition_list: vec![left, right],
         mode: ConditionMode::Or,
     }
 }
 
 pub fn not(condition_builder: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: None,
-        condition_list: Some(vec![condition_builder]),
+        operand_list: Vec::new(),
+        condition_list: vec![condition_builder],
         mode: ConditionMode::Not,
     }
 }
@@ -176,32 +253,32 @@ pub fn between(
     upper: Box<dyn OperandBuilder>,
 ) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![op, lower, upper]),
-        condition_list: None,
+        operand_list: vec![op, lower, upper],
+        condition_list: Vec::new(),
         mode: ConditionMode::Between,
     }
 }
 
 pub fn r#in(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![left, right]),
-        condition_list: None,
+        operand_list: vec![left, right],
+        condition_list: Vec::new(),
         mode: ConditionMode::In,
     }
 }
 
 pub fn attribute_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![name]),
-        condition_list: None,
+        operand_list: vec![name],
+        condition_list: Vec::new(),
         mode: ConditionMode::AttrExists,
     }
 }
 
 pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     ConditionBuilder {
-        operand_list: Some(vec![name]),
-        condition_list: None,
+        operand_list: vec![name],
+        condition_list: Vec::new(),
         mode: ConditionMode::AttrNotExists,
     }
 }
@@ -212,8 +289,8 @@ pub fn attribute_type(
 ) -> ConditionBuilder {
     let v = string_value(attr_type.to_string());
     ConditionBuilder {
-        operand_list: Some(vec![name, v]),
-        condition_list: None,
+        operand_list: vec![name, v],
+        condition_list: Vec::new(),
         mode: ConditionMode::AttrType,
     }
 }
@@ -221,8 +298,8 @@ pub fn attribute_type(
 pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> ConditionBuilder {
     let v = string_value(prefix.into());
     ConditionBuilder {
-        operand_list: Some(vec![name, v]),
-        condition_list: None,
+        operand_list: vec![name, v],
+        condition_list: Vec::new(),
         mode: ConditionMode::BeginsWith,
     }
 }
@@ -230,8 +307,8 @@ pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> Conditi
 pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionBuilder {
     let v = string_value(substr.into());
     ConditionBuilder {
-        operand_list: Some(vec![name, v]),
-        condition_list: None,
+        operand_list: vec![name, v],
+        condition_list: Vec::new(),
         mode: ConditionMode::Contains,
     }
 }

@@ -1,3 +1,5 @@
+use anyhow::bail;
+
 use crate::{string_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
@@ -17,8 +19,8 @@ enum KeyConditionMode {
 }
 
 pub struct KeyConditionBuilder {
-    operand_list: Option<Vec<Box<dyn OperandBuilder>>>,
-    key_condition_list: Option<Vec<KeyConditionBuilder>>,
+    operand_list: Vec<Box<dyn OperandBuilder>>,
+    key_condition_list: Vec<KeyConditionBuilder>,
     mode: KeyConditionMode,
 }
 
@@ -26,42 +28,126 @@ impl KeyConditionBuilder {
     pub fn and(self, right: KeyConditionBuilder) -> KeyConditionBuilder {
         key_and(self, right)
     }
+
+    fn build_child_nodes(&self) -> anyhow::Result<Vec<ExpressionNode>> {
+        let mut child_nodes = Vec::new();
+
+        for key_condition in self.key_condition_list.iter() {
+            let node = key_condition.build_tree()?;
+            child_nodes.push(node);
+        }
+
+        for ope in self.operand_list.iter() {
+            let operand = ope.build_operand()?;
+            child_nodes.push(operand.expression_node);
+        }
+
+        Ok(child_nodes)
+    }
+
+    fn compare_build_key_condition(
+        mode: KeyConditionMode,
+        mut node: ExpressionNode,
+    ) -> anyhow::Result<ExpressionNode> {
+        match mode {
+            KeyConditionMode::Equal => node.fmt_expression = "$c = $c".to_owned(),
+            KeyConditionMode::LessThan => node.fmt_expression = "$c < $c".to_owned(),
+            KeyConditionMode::LessThanEqual => node.fmt_expression = "$c <= $c".to_owned(),
+            KeyConditionMode::GreaterThan => node.fmt_expression = "$c > $c".to_owned(),
+            KeyConditionMode::GreaterThanEqual => node.fmt_expression = "$c >= $c".to_owned(),
+            _ => bail!(
+                "build compare key condition error: unsupported mode: {:?}",
+                mode
+            ),
+        }
+        Ok(node)
+    }
+
+    fn and_build_key_condition(
+        key_condition_builder: &KeyConditionBuilder,
+        mut node: ExpressionNode,
+    ) -> anyhow::Result<ExpressionNode> {
+        if key_condition_builder.key_condition_list.len() == 0
+            && key_condition_builder.operand_list.len() == 0
+        {
+            bail!("invalid andBuildKeyCondition parameter");
+        }
+
+        // create a string with escaped characters to substitute them with proper
+        // aliases during runtime
+        node.fmt_expression = "($c) AND ($c)".to_owned();
+
+        Ok(node)
+    }
+
+    fn between_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+        // Create a string with special characters that can be substituted later: $c
+        node.fmt_expression = "$c BETWEEN $c AND $c".to_owned();
+
+        Ok(node)
+    }
+
+    fn begins_with_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+        // Create a string with special characters that can be substituted later: $c
+        node.fmt_expression = "begins_with ($c, $c)".to_owned();
+
+        Ok(node)
+    }
 }
 
 impl TreeBuilder for KeyConditionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
-        unimplemented!("KeyConditionBuilder::build_tree")
+        let child_nodes = self.build_child_nodes()?;
+        let ret = ExpressionNode::from_children(child_nodes);
+
+        match self.mode {
+            KeyConditionMode::Equal
+            | KeyConditionMode::LessThan
+            | KeyConditionMode::LessThanEqual
+            | KeyConditionMode::GreaterThan
+            | KeyConditionMode::GreaterThanEqual => Ok(
+                KeyConditionBuilder::compare_build_key_condition(self.mode, ret)?,
+            ),
+            KeyConditionMode::And => Ok(KeyConditionBuilder::and_build_key_condition(self, ret)?),
+            KeyConditionMode::Between => Ok(KeyConditionBuilder::between_build_condition(ret)?),
+            KeyConditionMode::BeginsWith => {
+                Ok(KeyConditionBuilder::begins_with_build_condition(ret)?)
+            }
+            KeyConditionMode::Invalid => {
+                bail!("buildKeyCondition error: invalid key condition constructed")
+            } //_ => bail!("buildKeyCondition error: unsupported mode: {:?}", self.mode),
+        }
     }
 }
 
 pub fn key_equal(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, value]),
-        key_condition_list: None,
+        operand_list: vec![key, value],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::Equal,
     }
 }
 
 pub fn key_less_than(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, value]),
-        key_condition_list: None,
+        operand_list: vec![key, value],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThan,
     }
 }
 
 pub fn key_less_than_equal(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, value]),
-        key_condition_list: None,
+        operand_list: vec![key, value],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThanEqual,
     }
 }
 
 pub fn key_greater_than(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, value]),
-        key_condition_list: None,
+        operand_list: vec![key, value],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThan,
     }
 }
@@ -71,8 +157,8 @@ pub fn key_greater_than_equal(
     value: Box<ValueBuilder>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, value]),
-        key_condition_list: None,
+        operand_list: vec![key, value],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThanEqual,
     }
 }
@@ -80,23 +166,23 @@ pub fn key_greater_than_equal(
 pub fn key_and(left: KeyConditionBuilder, right: KeyConditionBuilder) -> KeyConditionBuilder {
     if left.mode != KeyConditionMode::Equal {
         return KeyConditionBuilder {
-            operand_list: None,
-            key_condition_list: None,
+            operand_list: Vec::new(),
+            key_condition_list: Vec::new(),
             mode: KeyConditionMode::Invalid,
         };
     }
 
     if right.mode == KeyConditionMode::And {
         return KeyConditionBuilder {
-            operand_list: None,
-            key_condition_list: None,
+            operand_list: Vec::new(),
+            key_condition_list: Vec::new(),
             mode: KeyConditionMode::Invalid,
         };
     }
 
     KeyConditionBuilder {
-        operand_list: None,
-        key_condition_list: Some(vec![left, right]),
+        operand_list: Vec::new(),
+        key_condition_list: vec![left, right],
         mode: KeyConditionMode::And,
     }
 }
@@ -107,8 +193,8 @@ pub fn key_between(
     lower: Box<ValueBuilder>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: Some(vec![key, upper, lower]),
-        key_condition_list: None,
+        operand_list: vec![key, upper, lower],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::Between,
     }
 }
@@ -116,8 +202,8 @@ pub fn key_between(
 pub fn key_begins_with(key: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyConditionBuilder {
     let v = string_value(prefix.into());
     KeyConditionBuilder {
-        operand_list: Some(vec![key, v]),
-        key_condition_list: None,
+        operand_list: vec![key, v],
+        key_condition_list: Vec::new(),
         mode: KeyConditionMode::BeginsWith,
     }
 }

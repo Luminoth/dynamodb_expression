@@ -189,12 +189,21 @@ pub(crate) struct ExpressionNode {
 }
 
 impl ExpressionNode {
-    pub fn new(children: Vec<ExpressionNode>) -> Self {
+    pub(crate) fn from_children(children: Vec<ExpressionNode>) -> Self {
         Self {
             names: Vec::new(),
             values: Vec::new(),
             children,
             fmt_expression: String::default(),
+        }
+    }
+
+    pub(crate) fn from_expression(names: Vec<String>, fmt_exression: impl Into<String>) -> Self {
+        Self {
+            names,
+            values: Vec::new(),
+            children: Vec::new(),
+            fmt_expression: fmt_exression.into(),
         }
     }
 

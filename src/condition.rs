@@ -203,7 +203,7 @@ impl ConditionBuilder {
 impl TreeBuilder for ConditionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
         let child_nodes = self.build_child_nodes()?;
-        let ret = ExpressionNode::new(child_nodes);
+        let ret = ExpressionNode::from_children(child_nodes);
 
         match self.mode {
             ConditionMode::Equal
@@ -227,7 +227,7 @@ impl TreeBuilder for ConditionBuilder {
             ConditionMode::AttrType => Ok(ConditionBuilder::attr_type_build_condition(ret)?),
             ConditionMode::BeginsWith => Ok(ConditionBuilder::begins_with_build_condition(ret)?),
             ConditionMode::Contains => Ok(ConditionBuilder::contains_build_condition(ret)?),
-            //_ => unimplemented!("ConditionBuidler::build_tree()"),
+            //_ => bail!("build condition error: unsupported mode: {:?}", self.mode),
         }
     }
 }

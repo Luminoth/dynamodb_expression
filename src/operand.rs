@@ -1,9 +1,17 @@
+use anyhow::bail;
+
 use crate::ExpressionNode;
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
 pub struct Operand {
     pub(crate) expression_node: ExpressionNode,
+}
+
+impl Operand {
+    fn new(expression_node: ExpressionNode) -> Self {
+        Self { expression_node }
+    }
 }
 
 pub trait OperandBuilder {
@@ -85,7 +93,11 @@ pub struct SizeBuilder {
 
 impl OperandBuilder for SizeBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        unimplemented!("SizeBuilder::build_operand()")
+        let mut operand = self.name_builder.build_operand()?;
+        operand.expression_node.fmt_expression =
+            format!("size ({})", operand.expression_node.fmt_expression);
+
+        Ok(operand)
     }
 }
 
@@ -99,7 +111,14 @@ pub struct KeyBuilder {
 
 impl OperandBuilder for KeyBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        unimplemented!("KeyBuilder::build_operand()")
+        if self.key == "" {
+            bail!("KeyBuilder build_operand unset");
+        }
+
+        Ok(Operand::new(ExpressionNode::from_expression(
+            vec![self.key.clone()],
+            "$n",
+        )))
     }
 }
 

@@ -113,20 +113,18 @@ impl Builder {
         let mut expression = Expression::new(expressions);
 
         if alias_list.names.len() != 0 {
-            let names = HashMap::new();
-            unimplemented!("Builder::build");
-            /*for ind, val := range aliasList.namesList {
-                namesMap[fmt.Sprintf("#%v", ind)] = aws.String(val)
-            }*/
+            let mut names = HashMap::new();
+            for (ind, val) in alias_list.names.iter().enumerate() {
+                names.insert(format!("#{}", ind), val.clone());
+            }
             expression.names = names;
         }
 
         if alias_list.values.len() != 0 {
-            let values = HashMap::new();
-            unimplemented!("Builder::build");
-            /*for i := 0; i < len(aliasList.valuesList); i++ {
-                valuesMap[fmt.Sprintf(":%v", i)] = &aliasList.valuesList[i]
-            }*/
+            let mut values = HashMap::new();
+            for (ind, val) in alias_list.values.iter().enumerate() {
+                values.insert(format!(":{}", ind), val.clone());
+            }
             expression.values = values;
         }
 

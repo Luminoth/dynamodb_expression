@@ -181,29 +181,38 @@ pub(crate) trait TreeBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode>;
 }
 
+#[derive(Default)]
 pub(crate) struct ExpressionNode {
-    names: Vec<String>,
+    pub(crate) names: Vec<String>,
     values: Vec<AttributeValue>,
     children: Vec<ExpressionNode>,
     pub(crate) fmt_expression: String,
 }
 
 impl ExpressionNode {
-    pub(crate) fn from_children(children: Vec<ExpressionNode>) -> Self {
+    pub(crate) fn from_names(names: Vec<String>, fmt_exression: impl Into<String>) -> Self {
         Self {
-            names: Vec::new(),
-            values: Vec::new(),
-            children,
-            fmt_expression: String::default(),
+            names,
+            fmt_expression: fmt_exression.into(),
+            ..Default::default()
         }
     }
 
-    pub(crate) fn from_expression(names: Vec<String>, fmt_exression: impl Into<String>) -> Self {
+    pub(crate) fn from_values(
+        values: Vec<AttributeValue>,
+        fmt_exression: impl Into<String>,
+    ) -> Self {
         Self {
-            names,
-            values: Vec::new(),
-            children: Vec::new(),
+            values,
             fmt_expression: fmt_exression.into(),
+            ..Default::default()
+        }
+    }
+
+    pub(crate) fn from_children(children: Vec<ExpressionNode>) -> Self {
+        Self {
+            children,
+            ..Default::default()
         }
     }
 

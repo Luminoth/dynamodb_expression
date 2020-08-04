@@ -1,4 +1,5 @@
 use anyhow::bail;
+use rusoto_dynamodb::AttributeValue;
 
 use crate::ExpressionNode;
 
@@ -35,7 +36,27 @@ pub enum ValueBuilder {
 
 impl OperandBuilder for ValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        unimplemented!("ValueBuilder::build_operand()")
+        let expr = match self {
+            ValueBuilder::Bool(b) => AttributeValue {
+                bool: Some(*b),
+                ..Default::default()
+            },
+            ValueBuilder::Int(n) => AttributeValue {
+                n: Some(n.to_string()),
+                ..Default::default()
+            },
+            ValueBuilder::Float(n) => AttributeValue {
+                n: Some(n.to_string()),
+                ..Default::default()
+            },
+            ValueBuilder::String(s) => AttributeValue {
+                s: Some(s.clone()),
+                ..Default::default()
+            },
+        };
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
     }
 }
 
@@ -75,7 +96,42 @@ impl NameBuilder {
 
 impl OperandBuilder for NameBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        unimplemented!("NameBuilder::build_operand()")
+        if self.name.is_empty() {
+            bail!("NameBuilder BuildOperand");
+        }
+
+        let mut node = ExpressionNode::default();
+
+        let name_split = self.name.split(".");
+        let mut fmt_names = Vec::new();
+
+        for mut word in name_split {
+            if word.is_empty() {
+                bail!("NameBuilder BuildOperand");
+            }
+
+            let mut substr = "";
+            if word.chars().nth(word.len() - 1).unwrap() == ']' {
+                for (j, ch) in word.chars().enumerate() {
+                    if ch == '[' {
+                        substr = &word[j..];
+                        word = &word[..j];
+                        break;
+                    }
+                }
+            }
+
+            if word.is_empty() {
+                bail!("NameBuilder BuildOperand");
+            }
+
+            // Create a string with special characters that can be substituted later: $p
+            node.names.push(word.to_owned());
+            fmt_names.push(format!("$n{}", substr));
+        }
+
+        node.fmt_expression = fmt_names.join(".");
+        Ok(Operand::new(node))
     }
 }
 
@@ -111,11 +167,11 @@ pub struct KeyBuilder {
 
 impl OperandBuilder for KeyBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        if self.key == "" {
+        if self.key.is_empty() {
             bail!("KeyBuilder build_operand unset");
         }
 
-        Ok(Operand::new(ExpressionNode::from_expression(
+        Ok(Operand::new(ExpressionNode::from_names(
             vec![self.key.clone()],
             "$n",
         )))
@@ -143,7 +199,23 @@ pub struct SetValueBuilder {
 
 impl OperandBuilder for SetValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        unimplemented!("SetValueBuilder::build_operand()")
+        let left = self.left_operand.build_operand()?;
+        let left_node = left.expression_node;
+
+        let right = self.right_operand.build_operand()?;
+        let right_node = right.expression_node;
+
+        let mut node = ExpressionNode::from_children(vec![left_node, right_node]);
+
+        node.fmt_expression = match self.mode {
+            SetValueMode::Plus => "$c + $c",
+            SetValueMode::Minus => "$c - $c",
+            SetValueMode::ListAppend => "list_append($c, $c)",
+            SetValueMode::IfNotExists => "if_not_exists($c, $c)",
+        }
+        .to_owned();
+
+        Ok(Operand::new(node))
     }
 }
 

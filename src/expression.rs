@@ -185,7 +185,7 @@ pub(crate) trait TreeBuilder {
 pub(crate) struct ExpressionNode {
     pub(crate) names: Vec<String>,
     values: Vec<AttributeValue>,
-    children: Vec<ExpressionNode>,
+    pub(crate) children: Vec<ExpressionNode>,
     pub(crate) fmt_expression: String,
 }
 

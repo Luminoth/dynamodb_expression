@@ -43,7 +43,7 @@ pub enum DynamoDBAttributeType {
 }
 
 impl DynamoDBAttributeType {
-    pub fn to_string(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         match self {
             DynamoDBAttributeType::String => "S",
             DynamoDBAttributeType::StringSet => "SS",
@@ -359,7 +359,7 @@ pub fn attribute_type(
     name: Box<NameBuilder>,
     attr_type: DynamoDBAttributeType,
 ) -> ConditionBuilder {
-    let v = string_value(attr_type.to_string());
+    let v = string_value(attr_type.as_str());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),

@@ -299,24 +299,29 @@ trait ListAppendBuilder: OperandBuilder {
 mod tests {
     use super::*;
 
+    #[test]
     fn test_name_builder() {
         let builder = name("test");
     }
 
+    #[test]
     fn test_value_builder() {
         let builder = ValueBuilder::String("test".to_owned());
     }
 
+    #[test]
     fn test_key_builder() {
         let builder = key("test");
     }
 
+    #[test]
     fn test_size_builder() {
         let builder = size(name("test"));
 
         let builder = name("test").size();
     }
 
+    #[test]
     fn test_size_builder_plus() {
         // TODO: set()
 
@@ -327,6 +332,7 @@ mod tests {
         let expr = int_value(10).plus(int_value(5));
     }
 
+    #[test]
     fn test_size_builder_minus() {
         // TODO: set()
 
@@ -337,6 +343,7 @@ mod tests {
         let expr = int_value(10).minus(int_value(5));
     }
 
+    #[test]
     fn test_size_builder_list_append() {
         // TODO: set()
 
@@ -347,6 +354,7 @@ mod tests {
         let expr = int_value(10).list_append(int_value(5));
     }
 
+    #[test]
     fn test_size_builder_if_not_exists() {
         // TODO: set()
 

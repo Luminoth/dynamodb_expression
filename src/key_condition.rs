@@ -209,7 +209,7 @@ pub fn key_begins_with(key: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyCo
 }
 
 impl KeyBuilder {
-    pub fn qual(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+    pub fn equal(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
         key_equal(self, value)
     }
 

@@ -566,4 +566,22 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn name_size_equal_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().equal(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c = $c"
+            )
+        );
+
+        Ok(())
+    }
 }

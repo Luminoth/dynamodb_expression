@@ -74,6 +74,7 @@ impl ConditionBuilder {
         or(self, right)
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn not(self) -> ConditionBuilder {
         not(self)
     }

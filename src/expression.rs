@@ -112,7 +112,7 @@ impl Builder {
 
         let mut expression = Expression::new(expressions);
 
-        if alias_list.names.len() != 0 {
+        if !alias_list.names.is_empty() {
             let mut names = HashMap::new();
             for (ind, val) in alias_list.names.iter().enumerate() {
                 names.insert(format!("#{}", ind), val.clone());
@@ -120,7 +120,7 @@ impl Builder {
             expression.names = names;
         }
 
-        if alias_list.values.len() != 0 {
+        if !alias_list.values.is_empty() {
             let mut values = HashMap::new();
             for (ind, val) in alias_list.values.iter().enumerate() {
                 values.insert(format!(":{}", ind), val.clone());

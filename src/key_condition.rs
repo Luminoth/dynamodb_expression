@@ -67,8 +67,8 @@ impl KeyConditionBuilder {
         key_condition_builder: &KeyConditionBuilder,
         mut node: ExpressionNode,
     ) -> anyhow::Result<ExpressionNode> {
-        if key_condition_builder.key_condition_list.len() == 0
-            && key_condition_builder.operand_list.len() == 0
+        if key_condition_builder.key_condition_list.is_empty()
+            && key_condition_builder.operand_list.is_empty()
         {
             bail!("invalid andBuildKeyCondition parameter");
         }

@@ -5,6 +5,7 @@ use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder};
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go
 
 pub struct ProjectionBuilder {
+    #[allow(clippy::vec_box)]
     names: Vec<Box<NameBuilder>>,
 }
 
@@ -25,7 +26,7 @@ impl ProjectionBuilder {
 
 impl TreeBuilder for ProjectionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
-        if self.names.len() == 0 {
+        if self.names.is_empty() {
             bail!("ProjectionBuilder build_tree");
         }
 
@@ -38,6 +39,7 @@ impl TreeBuilder for ProjectionBuilder {
     }
 }
 
+#[allow(clippy::boxed_local)]
 pub fn names_list(
     name_builder: Box<NameBuilder>,
     names_list: impl Into<Vec<Box<NameBuilder>>>,

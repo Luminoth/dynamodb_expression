@@ -60,16 +60,19 @@ impl OperationBuilder {
     }
 
     fn build_child_nodes(
-        operation_builder_list: &Vec<OperationBuilder>,
+        operation_builder_list: impl AsRef<[OperationBuilder]>,
     ) -> anyhow::Result<ExpressionNode> {
-        if operation_builder_list.len() == 0 {
+        if operation_builder_list.as_ref().is_empty() {
             bail!("buildChildNodes error: operationBuilder list is empty");
         }
 
         let mut node = ExpressionNode::default();
-        node.fmt_expression = format!("$c{}", ", $c".repeat(operation_builder_list.len() - 1));
+        node.fmt_expression = format!(
+            "$c{}",
+            ", $c".repeat(operation_builder_list.as_ref().len() - 1)
+        );
 
-        for val in operation_builder_list {
+        for val in operation_builder_list.as_ref() {
             let val_node = val.build_operation()?;
             node.children.push(val_node);
         }
@@ -112,13 +115,9 @@ pub struct UpdateBuilder {
 
 impl UpdateBuilder {
     pub fn delete(mut self, name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
-        if !self.operations.contains_key(&OperationMode::Delete) {
-            self.operations.insert(OperationMode::Delete, Vec::new());
-        }
-
         self.operations
-            .get_mut(&OperationMode::Delete)
-            .unwrap()
+            .entry(OperationMode::Delete)
+            .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
                 value: Some(value),
@@ -129,13 +128,9 @@ impl UpdateBuilder {
     }
 
     pub fn add(mut self, name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
-        if !self.operations.contains_key(&OperationMode::Add) {
-            self.operations.insert(OperationMode::Add, Vec::new());
-        }
-
         self.operations
-            .get_mut(&OperationMode::Add)
-            .unwrap()
+            .entry(OperationMode::Add)
+            .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
                 value: Some(value),
@@ -146,13 +141,9 @@ impl UpdateBuilder {
     }
 
     pub fn remove(mut self, name: Box<NameBuilder>) -> UpdateBuilder {
-        if !self.operations.contains_key(&OperationMode::Remove) {
-            self.operations.insert(OperationMode::Remove, Vec::new());
-        }
-
         self.operations
-            .get_mut(&OperationMode::Remove)
-            .unwrap()
+            .entry(OperationMode::Remove)
+            .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
                 value: None,
@@ -167,13 +158,9 @@ impl UpdateBuilder {
         name: Box<NameBuilder>,
         operand_builder: Box<dyn OperandBuilder>,
     ) -> UpdateBuilder {
-        if !self.operations.contains_key(&OperationMode::Set) {
-            self.operations.insert(OperationMode::Set, Vec::new());
-        }
-
         self.operations
-            .get_mut(&OperationMode::Set)
-            .unwrap()
+            .entry(OperationMode::Set)
+            .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
                 value: Some(operand_builder),

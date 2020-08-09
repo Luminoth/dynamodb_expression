@@ -102,7 +102,7 @@ impl OperandBuilder for NameBuilder {
 
         let mut node = ExpressionNode::default();
 
-        let name_split = self.name.split(".");
+        let name_split = self.name.split('.');
         let mut fmt_names = Vec::new();
 
         for mut word in name_split {
@@ -255,6 +255,7 @@ pub fn list_append(
     .into_boxed()
 }
 
+#[allow(clippy::boxed_local)]
 pub fn if_not_exists(
     name: Box<NameBuilder>,
     value: Box<dyn OperandBuilder>,
@@ -295,65 +296,62 @@ trait ListAppendBuilder: OperandBuilder {
 }
 
 #[cfg(test)]
-fn test_name_builder() {
-    let builder = name("test");
-}
+mod tests {
+    use super::*;
 
-#[cfg(test)]
-fn test_value_builder() {
-    let builder = ValueBuilder::String("test".to_owned());
-}
+    fn test_name_builder() {
+        let builder = name("test");
+    }
 
-#[cfg(test)]
-fn test_key_builder() {
-    let builder = key("test");
-}
+    fn test_value_builder() {
+        let builder = ValueBuilder::String("test".to_owned());
+    }
 
-#[cfg(test)]
-fn test_size_builder() {
-    let builder = size(name("test"));
+    fn test_key_builder() {
+        let builder = key("test");
+    }
 
-    let builder = name("test").size();
-}
+    fn test_size_builder() {
+        let builder = size(name("test"));
 
-#[cfg(test)]
-fn test_size_builder_plus() {
-    // TODO: set()
+        let builder = name("test").size();
+    }
 
-    let expr = plus(int_value(10), int_value(5));
+    fn test_size_builder_plus() {
+        // TODO: set()
 
-    let expr = name("test").plus(int_value(10));
+        let expr = plus(int_value(10), int_value(5));
 
-    let expr = int_value(10).plus(int_value(5));
-}
+        let expr = name("test").plus(int_value(10));
 
-#[cfg(test)]
-fn test_size_builder_minus() {
-    // TODO: set()
+        let expr = int_value(10).plus(int_value(5));
+    }
 
-    let expr = minus(int_value(10), int_value(5));
+    fn test_size_builder_minus() {
+        // TODO: set()
 
-    let expr = name("test").minus(int_value(10));
+        let expr = minus(int_value(10), int_value(5));
 
-    let expr = int_value(10).minus(int_value(5));
-}
+        let expr = name("test").minus(int_value(10));
 
-#[cfg(test)]
-fn test_size_builder_list_append() {
-    // TODO: set()
+        let expr = int_value(10).minus(int_value(5));
+    }
 
-    let expr = list_append(int_value(10), int_value(5));
+    fn test_size_builder_list_append() {
+        // TODO: set()
 
-    let expr = name("test").list_append(int_value(10));
+        let expr = list_append(int_value(10), int_value(5));
 
-    let expr = int_value(10).list_append(int_value(5));
-}
+        let expr = name("test").list_append(int_value(10));
 
-#[cfg(test)]
-fn test_size_builder_if_not_exists() {
-    // TODO: set()
+        let expr = int_value(10).list_append(int_value(5));
+    }
 
-    let expr = if_not_exists(name("test"), int_value(0));
+    fn test_size_builder_if_not_exists() {
+        // TODO: set()
 
-    let expr = name("test").if_not_exists(int_value(10));
+        let expr = if_not_exists(name("test"), int_value(0));
+
+        let expr = name("test").if_not_exists(int_value(10));
+    }
 }

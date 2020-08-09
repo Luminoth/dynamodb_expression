@@ -35,8 +35,10 @@ impl OperationBuilder {
     fn build_operation(&self) -> anyhow::Result<ExpressionNode> {
         let path_child = self.name.build_operand()?;
 
-        let mut node = ExpressionNode::from_children(vec![path_child.expression_node]);
-        node.fmt_expression = "$c".to_owned();
+        let mut node = ExpressionNode::from_children_expression(
+            vec![path_child.expression_node],
+            "$c".to_owned(),
+        );
 
         if self.mode == OperationMode::Remove {
             return Ok(node);

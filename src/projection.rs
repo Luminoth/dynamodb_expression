@@ -32,8 +32,10 @@ impl TreeBuilder for ProjectionBuilder {
 
         let child_nodes = self.build_child_nodes()?;
 
-        let mut node = ExpressionNode::from_children(child_nodes);
-        node.fmt_expression = format!("$c{}", ", $c".repeat(self.names.len() - 1));
+        let node = ExpressionNode::from_children_expression(
+            child_nodes,
+            format!("$c{}", ", $c".repeat(self.names.len() - 1)),
+        );
 
         Ok(node)
     }

@@ -386,7 +386,7 @@ pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionB
     }
 }
 
-trait EqualBuilder: OperandBuilder {
+pub trait EqualBuilder: OperandBuilder {
     fn equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -395,7 +395,7 @@ trait EqualBuilder: OperandBuilder {
     }
 }
 
-trait NotEqualBuilder: OperandBuilder {
+pub trait NotEqualBuilder: OperandBuilder {
     fn not_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -404,7 +404,7 @@ trait NotEqualBuilder: OperandBuilder {
     }
 }
 
-trait LessThanBuilder: OperandBuilder {
+pub trait LessThanBuilder: OperandBuilder {
     fn less_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -413,7 +413,7 @@ trait LessThanBuilder: OperandBuilder {
     }
 }
 
-trait LessThanEqualBuilder: OperandBuilder {
+pub trait LessThanEqualBuilder: OperandBuilder {
     fn less_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -422,7 +422,7 @@ trait LessThanEqualBuilder: OperandBuilder {
     }
 }
 
-trait GreaterThanBuilder: OperandBuilder {
+pub trait GreaterThanBuilder: OperandBuilder {
     fn greater_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -431,7 +431,7 @@ trait GreaterThanBuilder: OperandBuilder {
     }
 }
 
-trait GreaterThanEqualBuilder: OperandBuilder {
+pub trait GreaterThanEqualBuilder: OperandBuilder {
     fn greater_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -440,7 +440,7 @@ trait GreaterThanEqualBuilder: OperandBuilder {
     }
 }
 
-trait BetweenBuilder: OperandBuilder {
+pub trait BetweenBuilder: OperandBuilder {
     fn between(
         self: Box<Self>,
         upper: Box<dyn OperandBuilder>,
@@ -453,7 +453,7 @@ trait BetweenBuilder: OperandBuilder {
     }
 }
 
-trait InBuilder: OperandBuilder {
+pub trait InBuilder: OperandBuilder {
     fn r#in(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -513,3 +513,27 @@ impl GreaterThanBuilder for SizeBuilder {}
 impl GreaterThanEqualBuilder for SizeBuilder {}
 impl BetweenBuilder for SizeBuilder {}
 impl InBuilder for SizeBuilder {}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn name_equal_name() -> anyhow::Result<()> {
+        let builder = name("foo").equal(name("bar"));
+        let expr = builder.build_tree()?;
+
+        assert_eq!(
+            expr,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n")
+                ],
+                "$c = $c"
+            )
+        );
+
+        Ok(())
+    }
+}

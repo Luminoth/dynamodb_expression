@@ -181,7 +181,7 @@ pub(crate) trait TreeBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode>;
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct ExpressionNode {
     pub(crate) names: Vec<String>,
     values: Vec<AttributeValue>,
@@ -212,6 +212,17 @@ impl ExpressionNode {
     pub(crate) fn from_children(children: Vec<ExpressionNode>) -> Self {
         Self {
             children,
+            ..Default::default()
+        }
+    }
+
+    pub(crate) fn from_children_expression(
+        children: Vec<ExpressionNode>,
+        fmt_expression: impl Into<String>,
+    ) -> Self {
+        Self {
+            children,
+            fmt_expression: fmt_expression.into(),
             ..Default::default()
         }
     }
@@ -292,3 +303,21 @@ impl ExpressionNode {
         self.children[index].build_expression_string(alias_list)
     }
 }
+
+impl PartialEq for ExpressionNode {
+    fn eq(&self, other: &Self) -> bool {
+        if self.names != other.names {
+            return false;
+        }
+
+        // ignore value equality for now
+
+        if self.children != other.children {
+            return false;
+        }
+
+        self.fmt_expression == other.fmt_expression
+    }
+}
+
+impl Eq for ExpressionNode {}

@@ -205,15 +205,16 @@ impl OperandBuilder for SetValueBuilder {
         let right = self.right_operand.build_operand()?;
         let right_node = right.expression_node;
 
-        let mut node = ExpressionNode::from_children(vec![left_node, right_node]);
-
-        node.fmt_expression = match self.mode {
-            SetValueMode::Plus => "$c + $c",
-            SetValueMode::Minus => "$c - $c",
-            SetValueMode::ListAppend => "list_append($c, $c)",
-            SetValueMode::IfNotExists => "if_not_exists($c, $c)",
-        }
-        .to_owned();
+        let node = ExpressionNode::from_children_expression(
+            vec![left_node, right_node],
+            match self.mode {
+                SetValueMode::Plus => "$c + $c",
+                SetValueMode::Minus => "$c - $c",
+                SetValueMode::ListAppend => "list_append($c, $c)",
+                SetValueMode::IfNotExists => "if_not_exists($c, $c)",
+            }
+            .to_owned(),
+        );
 
         Ok(Operand::new(node))
     }

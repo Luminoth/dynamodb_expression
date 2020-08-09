@@ -1,8 +1,7 @@
 use anyhow::bail;
 
 use crate::{
-    string_value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder,
-    ValueBuilder,
+    str_value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder, ValueBuilder,
 };
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
@@ -360,7 +359,7 @@ pub fn attribute_type(
     name: Box<NameBuilder>,
     attr_type: DynamoDBAttributeType,
 ) -> ConditionBuilder {
-    let v = string_value(attr_type.as_str());
+    let v = str_value(attr_type.as_str());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -369,7 +368,7 @@ pub fn attribute_type(
 }
 
 pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> ConditionBuilder {
-    let v = string_value(prefix.into());
+    let v = str_value(prefix.into());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -378,7 +377,7 @@ pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> Conditi
 }
 
 pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionBuilder {
-    let v = string_value(substr.into());
+    let v = str_value(substr.into());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -516,19 +515,50 @@ impl InBuilder for SizeBuilder {}
 
 #[cfg(test)]
 mod tests {
+    use rusoto_dynamodb::AttributeValue;
+
     use crate::*;
 
     #[test]
     fn name_equal_name() -> anyhow::Result<()> {
-        let builder = name("foo").equal(name("bar"));
-        let expr = builder.build_tree()?;
+        let input = name("foo").equal(name("bar"));
 
         assert_eq!(
-            expr,
+            input.build_tree()?,
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
                     ExpressionNode::from_names(vec!["bar".to_owned()], "$n")
+                ],
+                "$c = $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_equal_value() -> anyhow::Result<()> {
+        let input = int_value(5).equal(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        },],
+                        "$v"
+                    ),
                 ],
                 "$c = $c"
             )

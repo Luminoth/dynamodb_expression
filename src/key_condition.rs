@@ -1,6 +1,6 @@
 use anyhow::bail;
 
-use crate::{string_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
+use crate::{str_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
 
@@ -200,7 +200,7 @@ pub fn key_between(
 }
 
 pub fn key_begins_with(key: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyConditionBuilder {
-    let v = string_value(prefix.into());
+    let v = str_value(prefix.into());
     KeyConditionBuilder {
         operand_list: vec![key, v],
         key_condition_list: Vec::new(),

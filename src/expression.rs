@@ -181,7 +181,7 @@ pub(crate) trait TreeBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode>;
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq)]
 pub(crate) struct ExpressionNode {
     pub(crate) names: Vec<String>,
     values: Vec<AttributeValue>,
@@ -303,21 +303,3 @@ impl ExpressionNode {
         self.children[index].build_expression_string(alias_list)
     }
 }
-
-impl PartialEq for ExpressionNode {
-    fn eq(&self, other: &Self) -> bool {
-        if self.names != other.names {
-            return false;
-        }
-
-        // ignore value equality for now
-
-        if self.children != other.children {
-            return false;
-        }
-
-        self.fmt_expression == other.fmt_expression
-    }
-}
-
-impl Eq for ExpressionNode {}

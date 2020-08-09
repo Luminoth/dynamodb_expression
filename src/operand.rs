@@ -76,7 +76,7 @@ pub fn float_value(value: f64) -> Box<ValueBuilder> {
     ValueBuilder::Float(value).into_boxed()
 }
 
-pub fn string_value(value: impl Into<String>) -> Box<ValueBuilder> {
+pub fn str_value(value: impl Into<String>) -> Box<ValueBuilder> {
     ValueBuilder::String(value.into()).into_boxed()
 }
 

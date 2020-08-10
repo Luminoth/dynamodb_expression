@@ -584,4 +584,70 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn name_not_equal_name() -> anyhow::Result<()> {
+        let input = name("foo").not_equal(name("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c <> $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_not_equal_value() -> anyhow::Result<()> {
+        let input = int_value(5).not_equal(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c <> $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_size_not_equal_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().not_equal(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c <> $c"
+            )
+        );
+
+        Ok(())
+    }
 }

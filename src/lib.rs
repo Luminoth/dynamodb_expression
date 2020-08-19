@@ -1,6 +1,7 @@
 //#![deny(warnings)]
 
 mod condition;
+pub mod error;
 mod expression;
 mod key_condition;
 mod operand;

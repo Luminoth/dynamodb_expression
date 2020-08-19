@@ -1,6 +1,6 @@
 use anyhow::bail;
 
-use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder};
+use crate::{error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go
 
@@ -27,7 +27,10 @@ impl ProjectionBuilder {
 impl TreeBuilder for ProjectionBuilder {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode> {
         if self.names.is_empty() {
-            bail!("ProjectionBuilder build_tree");
+            bail!(ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "ProjectionBuilder".to_owned(),
+            ));
         }
 
         let child_nodes = self.build_child_nodes()?;

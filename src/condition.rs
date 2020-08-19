@@ -1,7 +1,8 @@
 use anyhow::bail;
 
 use crate::{
-    str_value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder, ValueBuilder,
+    /*error::ExpressionError,*/ str_value, ExpressionNode, NameBuilder, OperandBuilder,
+    SizeBuilder, TreeBuilder, ValueBuilder,
 };
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
@@ -227,6 +228,10 @@ impl TreeBuilder for ConditionBuilder {
             ConditionMode::AttrType => Ok(ConditionBuilder::attr_type_build_condition(ret)?),
             ConditionMode::BeginsWith => Ok(ConditionBuilder::begins_with_build_condition(ret)?),
             ConditionMode::Contains => Ok(ConditionBuilder::contains_build_condition(ret)?),
+            /*ConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "ConditionBuilder".to_owned(),
+            )),*/
             //_ => bail!("build condition error: unsupported mode: {:?}", self.mode),
         }
     }
@@ -650,4 +655,410 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn name_less_than_name() -> anyhow::Result<()> {
+        let input = name("foo").less_than(name("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c < $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_less_than_value() -> anyhow::Result<()> {
+        let input = int_value(5).less_than(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c < $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_size_less_than_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().less_than(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c < $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_less_than_equal_name() -> anyhow::Result<()> {
+        let input = name("foo").less_than_equal(name("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c <= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_less_than_equal_value() -> anyhow::Result<()> {
+        let input = int_value(5).less_than_equal(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c <= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_size_less_than_equal_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().less_than_equal(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c <= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_greater_than_name() -> anyhow::Result<()> {
+        let input = name("foo").greater_than(name("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c > $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_greater_than_value() -> anyhow::Result<()> {
+        let input = int_value(5).greater_than(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c > $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_size_greater_than_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().greater_than(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c > $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_greater_than_equal_name() -> anyhow::Result<()> {
+        let input = name("foo").greater_than_equal(name("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c >= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn value_greater_than_equal_value() -> anyhow::Result<()> {
+        let input = int_value(5).greater_than_equal(str_value("bar"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some(5.to_string()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c >= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_size_greater_than_equal_name_size() -> anyhow::Result<()> {
+        let input = name("foo[1]").size().greater_than_equal(name("bar").size());
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n[1])"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "size ($n)"),
+                ],
+                "$c >= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_equal() -> anyhow::Result<()> {
+        let input = name("").size().equal(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_not_equal() -> anyhow::Result<()> {
+        let input = name("").size().not_equal(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_less_than() -> anyhow::Result<()> {
+        let input = name("").size().less_than(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_less_than_equal() -> anyhow::Result<()> {
+        let input = name("").size().less_than_equal(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_greater_than() -> anyhow::Result<()> {
+        let input = name("").size().greater_than(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_greater_than_equal() -> anyhow::Result<()> {
+        let input = name("").size().greater_than_equal(int_value(5));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .err()
+                .unwrap()
+                .downcast::<error::ExpressionError>()
+                .unwrap(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    // TODO: TestBuildCondition
+
+    // TODO: TestBoolCondition
+
+    // TODO: TestNotCondition
+
+    // TODO: TestBetweenCondition
+
+    // TODO: TestInCondition
+
+    // TODO: TestAttrExistsCondition
+
+    // TODO: TestAttrTypeCondition
+
+    // TODO: TestBeginsWithCondition
+
+    // TODO: TestContainsCondition
+
+    // TODO: TestCompoundBuildCondition
+
+    // TODO: TestInBuildCondition
 }

@@ -242,7 +242,7 @@ impl ExpressionNode {
             }
 
             if idx == formatted_expression.len() - 1 {
-                bail!("build_expression_string error: invalid escape character");
+                bail!("buildexprNode error: invalid escape character");
             }
 
             // if an escaped character is found, substitute it with the proper alias
@@ -264,10 +264,7 @@ impl ExpressionNode {
                     index.2 += 1;
                     alias
                 }
-                _ => bail!(
-                    "build_expression_string error: invalid escape rune {}",
-                    rune
-                ),
+                _ => bail!("buildexprNode error: invalid escape rune {}", rune),
             };
 
             formatted_expression = format!(
@@ -284,21 +281,21 @@ impl ExpressionNode {
 
     fn substitute_path(&self, index: usize, alias_list: &mut AliasList) -> anyhow::Result<String> {
         if index >= self.names.len() {
-            bail!("substitute_path error: ExpressionNode names out of range");
+            bail!("substitutePath error: exprNode []names out of range");
         }
         alias_list.alias_path(self.names[index].clone())
     }
 
     fn substitute_value(&self, index: usize, alias_list: &mut AliasList) -> anyhow::Result<String> {
         if index >= self.values.len() {
-            bail!("substitute_path error: ExpressionNode values out of range");
+            bail!("substituteValue error: exprNode []values out of range");
         }
         alias_list.alias_value(self.values[index].clone())
     }
 
     fn substitute_child(&self, index: usize, alias_list: &mut AliasList) -> anyhow::Result<String> {
         if index >= self.children.len() {
-            bail!("substitute_path error: ExpressionNode children out of range");
+            bail!("substituteChild error: exprNode []children out of range");
         }
         self.children[index].build_expression_string(alias_list)
     }

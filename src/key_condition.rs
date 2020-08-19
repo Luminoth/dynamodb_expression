@@ -1,6 +1,9 @@
 use anyhow::bail;
 
-use crate::{str_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
+use crate::{
+    error::ExpressionError, str_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
+    ValueBuilder,
+};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
 
@@ -70,7 +73,10 @@ impl KeyConditionBuilder {
         if key_condition_builder.key_condition_list.is_empty()
             && key_condition_builder.operand_list.is_empty()
         {
-            bail!("invalid andBuildKeyCondition parameter");
+            bail!(ExpressionError::InvalidParameterError(
+                "andBuildKeyCondition".to_owned(),
+                "KeyConditionBuilder".to_owned(),
+            ));
         }
 
         // create a string with escaped characters to substitute them with proper
@@ -113,6 +119,10 @@ impl TreeBuilder for KeyConditionBuilder {
             KeyConditionMode::BeginsWith => {
                 Ok(KeyConditionBuilder::begins_with_build_condition(ret)?)
             }
+            /*KeyConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "KeyConditionBuilder".to_owned(),
+            )),*/
             KeyConditionMode::Invalid => {
                 bail!("buildKeyCondition error: invalid key condition constructed")
             } //_ => bail!("buildKeyCondition error: unsupported mode: {:?}", self.mode),

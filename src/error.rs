@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ExpressionError {
     #[error("{0} error: invalid parameter: {1}")]
     InvalidParameterError(/*functionName*/ String, /*parameterType*/ String),

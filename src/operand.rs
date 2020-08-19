@@ -1,7 +1,7 @@
 use anyhow::bail;
 use rusoto_dynamodb::AttributeValue;
 
-use crate::ExpressionNode;
+use crate::{error::ExpressionError, ExpressionNode};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
@@ -97,7 +97,10 @@ impl NameBuilder {
 impl OperandBuilder for NameBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         if self.name.is_empty() {
-            bail!("NameBuilder BuildOperand");
+            bail!(ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned(),
+            ));
         }
 
         let mut node = ExpressionNode::default();
@@ -107,7 +110,10 @@ impl OperandBuilder for NameBuilder {
 
         for mut word in name_split {
             if word.is_empty() {
-                bail!("NameBuilder BuildOperand");
+                bail!(ExpressionError::UnsetParameterError(
+                    "BuildOperand".to_owned(),
+                    "NameBuilder".to_owned(),
+                ));
             }
 
             let mut substr = "";
@@ -122,7 +128,10 @@ impl OperandBuilder for NameBuilder {
             }
 
             if word.is_empty() {
-                bail!("NameBuilder BuildOperand");
+                bail!(ExpressionError::UnsetParameterError(
+                    "BuildOperand".to_owned(),
+                    "NameBuilder".to_owned(),
+                ));
             }
 
             // Create a string with special characters that can be substituted later: $p
@@ -168,7 +177,10 @@ pub struct KeyBuilder {
 impl OperandBuilder for KeyBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         if self.key.is_empty() {
-            bail!("KeyBuilder build_operand unset");
+            bail!(ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "KeyBuilder".to_owned(),
+            ));
         }
 
         Ok(Operand::new(ExpressionNode::from_names(
@@ -199,6 +211,13 @@ pub struct SetValueBuilder {
 
 impl OperandBuilder for SetValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
+        /*if self.mode == SetValueMode::Unset {
+            bail!(ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "SetValueBuilder".to_owned(),
+            ));
+        }*/
+
         let left = self.left_operand.build_operand()?;
         let left_node = left.expression_node;
 
@@ -212,6 +231,7 @@ impl OperandBuilder for SetValueBuilder {
                 SetValueMode::Minus => "$c - $c",
                 SetValueMode::ListAppend => "list_append($c, $c)",
                 SetValueMode::IfNotExists => "if_not_exists($c, $c)",
+                //_ => bail!("build operand error: unsupported mode: {:?}", self.mode),
             }
             .to_owned(),
         );

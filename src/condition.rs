@@ -927,10 +927,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
@@ -947,10 +945,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
@@ -967,10 +963,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
@@ -987,10 +981,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
@@ -1007,10 +999,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
@@ -1027,10 +1017,8 @@ mod tests {
         assert_eq!(
             input
                 .build_tree()
-                .err()
-                .unwrap()
-                .downcast::<error::ExpressionError>()
-                .unwrap(),
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()

@@ -1030,7 +1030,49 @@ mod tests {
 
     // TODO: TestBuildCondition
 
-    // TODO: TestBoolCondition
+    #[test]
+    fn basic_method_and() -> anyhow::Result<()> {
+        let input = name("foo")
+            .equal(int_value(5))
+            .and(name("bar").equal(str_value("baz")));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            )
+                        ],
+                        "$c = $c"
+                    ),
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    s: Some("baz".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            )
+                        ],
+                        "$c = $c"
+                    ),
+                ],
+                "($c) AND ($c)"
+            )
+        );
+
+        Ok(())
+    }
 
     // TODO: TestNotCondition
 

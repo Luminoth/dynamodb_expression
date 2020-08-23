@@ -66,10 +66,12 @@ pub struct ConditionBuilder {
 }
 
 impl ConditionBuilder {
+    // TODO: variadic macro
     pub fn and(self, right: ConditionBuilder) -> ConditionBuilder {
         and(self, right)
     }
 
+    // TODO: variadic macro
     pub fn or(self, right: ConditionBuilder) -> ConditionBuilder {
         or(self, right)
     }
@@ -300,6 +302,7 @@ pub fn greater_than_equal(
     }
 }
 
+// TODO: variadic macro
 pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: Vec::new(),
@@ -308,6 +311,7 @@ pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder 
     }
 }
 
+// TODO: variadic macro
 pub fn or(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: Vec::new(),
@@ -336,6 +340,7 @@ pub fn between(
     }
 }
 
+// TODO: variadic macro
 pub fn r#in(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: vec![left, right],
@@ -458,6 +463,7 @@ pub trait BetweenBuilder: OperandBuilder {
 }
 
 pub trait InBuilder: OperandBuilder {
+    // TODO: variadic macro
     fn r#in(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -1028,7 +1034,7 @@ mod tests {
         Ok(())
     }
 
-    // TODO: TestBuildCondition
+    // no_match_error not converted because we don't have an unset mode
 
     #[test]
     fn basic_method_and() -> anyhow::Result<()> {
@@ -1074,9 +1080,286 @@ mod tests {
         Ok(())
     }
 
-    // TODO: TestNotCondition
+    #[test]
+    fn basic_method_or() -> anyhow::Result<()> {
+        let input = name("foo")
+            .equal(int_value(5))
+            .or(name("bar").equal(str_value("baz")));
 
-    // TODO: TestBetweenCondition
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            )
+                        ],
+                        "$c = $c"
+                    ),
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    s: Some("baz".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            )
+                        ],
+                        "$c = $c"
+                    ),
+                ],
+                "($c) OR ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    // TODO: variadic tests require a macro with variadic arguments
+
+    #[test]
+    fn invalid_operand_error_and() -> anyhow::Result<()> {
+        let input = name("")
+            .size()
+            .greater_than_equal(int_value(5))
+            .and(name("[5]").between(int_value(3), int_value(9)));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_or() -> anyhow::Result<()> {
+        let input = name("")
+            .size()
+            .greater_than_equal(int_value(5))
+            .or(name("[5]").between(int_value(3), int_value(9)));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_not() -> anyhow::Result<()> {
+        let input = name("foo").equal(int_value(5)).not();
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![
+                        ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                        ExpressionNode::from_values(
+                            vec![AttributeValue {
+                                n: Some("5".to_owned()),
+                                ..Default::default()
+                            }],
+                            "$v"
+                        )
+                    ],
+                    "$c = $c"
+                )],
+                "NOT ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_function_not() -> anyhow::Result<()> {
+        let input = not(name("foo").equal(int_value(5)));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![
+                        ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                        ExpressionNode::from_values(
+                            vec![AttributeValue {
+                                n: Some("5".to_owned()),
+                                ..Default::default()
+                            }],
+                            "$v"
+                        )
+                    ],
+                    "$c = $c"
+                )],
+                "NOT ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_not() -> anyhow::Result<()> {
+        let input = name("")
+            .size()
+            .greater_than_equal(int_value(5))
+            .or(name("[5]").between(int_value(3), int_value(9)))
+            .not();
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_between_for_name() -> anyhow::Result<()> {
+        let input = name("foo").between(int_value(5), int_value(7));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c BETWEEN $c AND $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_between_for_value() -> anyhow::Result<()> {
+        let input = int_value(6).between(int_value(5), int_value(7));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("6".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c BETWEEN $c AND $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_between_for_size() -> anyhow::Result<()> {
+        let input = name("foo").size().between(int_value(5), int_value(7));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n)"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c BETWEEN $c AND $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_between() -> anyhow::Result<()> {
+        let input = name("[5]").between(int_value(3), name("foo..bar"));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
 
     // TODO: TestInCondition
 

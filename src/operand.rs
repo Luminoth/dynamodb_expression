@@ -17,42 +17,38 @@ impl Operand {
 
 pub trait OperandBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand>;
+}
 
-    fn into_boxed(self) -> Box<Self>
-    where
-        Self: Sized,
-    {
-        Box::new(self)
+// marker trait for working with generic ValueBuilders
+pub trait ValueBuilderImpl: OperandBuilder {}
+
+impl From<Box<dyn ValueBuilderImpl>> for Box<dyn OperandBuilder> {
+    fn from(v: Box<dyn ValueBuilderImpl>) -> Box<dyn OperandBuilder> {
+        v.into()
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub enum ValueBuilder {
-    Bool(bool),
-    Int(i64),
-    Float(f64),
-    String(String),
+pub struct ValueBuilder<T> {
+    value: T,
 }
 
-impl OperandBuilder for ValueBuilder {
+macro_rules! impl_value_builder {
+    ($type:ty) => {
+        impl ValueBuilderImpl for ValueBuilder<$type> {}
+
+        impl PlusBuilder for ValueBuilder<$type> {}
+        impl MinusBuilder for ValueBuilder<$type> {}
+        impl ListAppendBuilder for ValueBuilder<$type> {}
+    };
+}
+
+impl_value_builder!(bool);
+
+impl OperandBuilder for ValueBuilder<bool> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = match self {
-            ValueBuilder::Bool(b) => AttributeValue {
-                bool: Some(*b),
-                ..Default::default()
-            },
-            ValueBuilder::Int(n) => AttributeValue {
-                n: Some(n.to_string()),
-                ..Default::default()
-            },
-            ValueBuilder::Float(n) => AttributeValue {
-                n: Some(n.to_string()),
-                ..Default::default()
-            },
-            ValueBuilder::String(s) => AttributeValue {
-                s: Some(s.clone()),
-                ..Default::default()
-            },
+        let expr = AttributeValue {
+            bool: Some(self.value),
+            ..Default::default()
         };
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
@@ -60,24 +56,64 @@ impl OperandBuilder for ValueBuilder {
     }
 }
 
-impl PlusBuilder for ValueBuilder {}
-impl MinusBuilder for ValueBuilder {}
-impl ListAppendBuilder for ValueBuilder {}
+impl_value_builder!(i64);
 
-pub fn bool_value(value: bool) -> Box<ValueBuilder> {
-    ValueBuilder::Bool(value).into_boxed()
+impl OperandBuilder for ValueBuilder<i64> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = AttributeValue {
+            n: Some(self.value.to_string()),
+            ..Default::default()
+        };
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
 }
 
-pub fn int_value(value: i64) -> Box<ValueBuilder> {
-    ValueBuilder::Int(value).into_boxed()
+impl_value_builder!(f64);
+
+impl OperandBuilder for ValueBuilder<f64> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = AttributeValue {
+            n: Some(self.value.to_string()),
+            ..Default::default()
+        };
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
 }
 
-pub fn float_value(value: f64) -> Box<ValueBuilder> {
-    ValueBuilder::Float(value).into_boxed()
+impl_value_builder!(&str);
+
+impl OperandBuilder for ValueBuilder<&str> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = AttributeValue {
+            s: Some(self.value.to_owned()),
+            ..Default::default()
+        };
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
 }
 
-pub fn str_value(value: impl Into<String>) -> Box<ValueBuilder> {
-    ValueBuilder::String(value.into()).into_boxed()
+impl_value_builder!(String);
+
+impl OperandBuilder for ValueBuilder<String> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = AttributeValue {
+            s: Some(self.value.clone()),
+            ..Default::default()
+        };
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
+}
+
+pub fn value<T>(value: T) -> Box<ValueBuilder<T>> {
+    Box::new(ValueBuilder { value })
 }
 
 pub struct NameBuilder {
@@ -86,7 +122,7 @@ pub struct NameBuilder {
 
 impl NameBuilder {
     pub fn size(self: Box<Self>) -> Box<SizeBuilder> {
-        SizeBuilder { name_builder: self }.into_boxed()
+        Box::new(SizeBuilder { name_builder: self })
     }
 
     pub fn if_not_exists(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder> {
@@ -149,7 +185,7 @@ impl MinusBuilder for NameBuilder {}
 impl ListAppendBuilder for NameBuilder {}
 
 pub fn name(name: impl Into<String>) -> Box<NameBuilder> {
-    NameBuilder { name: name.into() }.into_boxed()
+    Box::new(NameBuilder { name: name.into() })
 }
 
 pub struct SizeBuilder {
@@ -191,7 +227,7 @@ impl OperandBuilder for KeyBuilder {
 }
 
 pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
-    KeyBuilder { key: key.into() }.into_boxed()
+    Box::new(KeyBuilder { key: key.into() })
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -244,36 +280,33 @@ pub fn plus(
     left_operand: Box<dyn OperandBuilder>,
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
-    SetValueBuilder {
+    Box::new(SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::Plus,
-    }
-    .into_boxed()
+    })
 }
 
 pub fn minus(
     left_operand: Box<dyn OperandBuilder>,
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
-    SetValueBuilder {
+    Box::new(SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::Minus,
-    }
-    .into_boxed()
+    })
 }
 
 pub fn list_append(
     left_operand: Box<dyn OperandBuilder>,
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
-    SetValueBuilder {
+    Box::new(SetValueBuilder {
         left_operand,
         right_operand,
         mode: SetValueMode::ListAppend,
-    }
-    .into_boxed()
+    })
 }
 
 #[allow(clippy::boxed_local)]
@@ -281,12 +314,11 @@ pub fn if_not_exists(
     name: Box<NameBuilder>,
     value: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
-    SetValueBuilder {
-        left_operand: name.into_boxed(),
+    Box::new(SetValueBuilder {
+        left_operand: name,
         right_operand: value,
         mode: SetValueMode::IfNotExists,
-    }
-    .into_boxed()
+    })
 }
 
 trait PlusBuilder: OperandBuilder {

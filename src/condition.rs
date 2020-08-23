@@ -1,7 +1,7 @@
 use anyhow::bail;
 
 use crate::{
-    /*error::ExpressionError,*/ str_value, ExpressionNode, NameBuilder, OperandBuilder,
+    /*error::ExpressionError,*/ value, ExpressionNode, NameBuilder, OperandBuilder,
     SizeBuilder, TreeBuilder, ValueBuilder,
 };
 
@@ -369,7 +369,7 @@ pub fn attribute_type(
     name: Box<NameBuilder>,
     attr_type: DynamoDBAttributeType,
 ) -> ConditionBuilder {
-    let v = str_value(attr_type.as_str());
+    let v = value(attr_type.as_str().to_owned());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -378,7 +378,7 @@ pub fn attribute_type(
 }
 
 pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> ConditionBuilder {
-    let v = str_value(prefix.into());
+    let v = value(prefix.into());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -387,7 +387,7 @@ pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> Conditi
 }
 
 pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionBuilder {
-    let v = str_value(substr.into());
+    let v = value(substr.into());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),
@@ -506,14 +506,24 @@ impl GreaterThanEqualBuilder for NameBuilder {}
 impl BetweenBuilder for NameBuilder {}
 impl InBuilder for NameBuilder {}
 
-impl EqualBuilder for ValueBuilder {}
-impl NotEqualBuilder for ValueBuilder {}
-impl LessThanBuilder for ValueBuilder {}
-impl LessThanEqualBuilder for ValueBuilder {}
-impl GreaterThanBuilder for ValueBuilder {}
-impl GreaterThanEqualBuilder for ValueBuilder {}
-impl BetweenBuilder for ValueBuilder {}
-impl InBuilder for ValueBuilder {}
+macro_rules! impl_value_builder {
+    ($type:ty) => {
+        impl EqualBuilder for ValueBuilder<$type> {}
+        impl NotEqualBuilder for ValueBuilder<$type> {}
+        impl LessThanBuilder for ValueBuilder<$type> {}
+        impl LessThanEqualBuilder for ValueBuilder<$type> {}
+        impl GreaterThanBuilder for ValueBuilder<$type> {}
+        impl GreaterThanEqualBuilder for ValueBuilder<$type> {}
+        impl BetweenBuilder for ValueBuilder<$type> {}
+        impl InBuilder for ValueBuilder<$type> {}
+    };
+}
+
+impl_value_builder!(bool);
+impl_value_builder!(i64);
+impl_value_builder!(f64);
+impl_value_builder!(&str);
+impl_value_builder!(String);
 
 impl EqualBuilder for SizeBuilder {}
 impl NotEqualBuilder for SizeBuilder {}
@@ -550,7 +560,7 @@ mod tests {
 
     #[test]
     fn value_equal_value() -> anyhow::Result<()> {
-        let input = int_value(5).equal(str_value("bar"));
+        let input = value(5).equal(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -616,7 +626,7 @@ mod tests {
 
     #[test]
     fn value_not_equal_value() -> anyhow::Result<()> {
-        let input = int_value(5).not_equal(str_value("bar"));
+        let input = value(5).not_equal(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -682,7 +692,7 @@ mod tests {
 
     #[test]
     fn value_less_than_value() -> anyhow::Result<()> {
-        let input = int_value(5).less_than(str_value("bar"));
+        let input = value(5).less_than(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -748,7 +758,7 @@ mod tests {
 
     #[test]
     fn value_less_than_equal_value() -> anyhow::Result<()> {
-        let input = int_value(5).less_than_equal(str_value("bar"));
+        let input = value(5).less_than_equal(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -814,7 +824,7 @@ mod tests {
 
     #[test]
     fn value_greater_than_value() -> anyhow::Result<()> {
-        let input = int_value(5).greater_than(str_value("bar"));
+        let input = value(5).greater_than(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -880,7 +890,7 @@ mod tests {
 
     #[test]
     fn value_greater_than_equal_value() -> anyhow::Result<()> {
-        let input = int_value(5).greater_than_equal(str_value("bar"));
+        let input = value(5).greater_than_equal(value("bar"));
 
         assert_eq!(
             input.build_tree()?,
@@ -928,7 +938,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_equal() -> anyhow::Result<()> {
-        let input = name("").size().equal(int_value(5));
+        let input = name("").size().equal(value(5));
 
         assert_eq!(
             input
@@ -946,7 +956,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_not_equal() -> anyhow::Result<()> {
-        let input = name("").size().not_equal(int_value(5));
+        let input = name("").size().not_equal(value(5));
 
         assert_eq!(
             input
@@ -964,7 +974,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_less_than() -> anyhow::Result<()> {
-        let input = name("").size().less_than(int_value(5));
+        let input = name("").size().less_than(value(5));
 
         assert_eq!(
             input
@@ -982,7 +992,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_less_than_equal() -> anyhow::Result<()> {
-        let input = name("").size().less_than_equal(int_value(5));
+        let input = name("").size().less_than_equal(value(5));
 
         assert_eq!(
             input
@@ -1000,7 +1010,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_greater_than() -> anyhow::Result<()> {
-        let input = name("").size().greater_than(int_value(5));
+        let input = name("").size().greater_than(value(5));
 
         assert_eq!(
             input
@@ -1018,7 +1028,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_greater_than_equal() -> anyhow::Result<()> {
-        let input = name("").size().greater_than_equal(int_value(5));
+        let input = name("").size().greater_than_equal(value(5));
 
         assert_eq!(
             input
@@ -1039,8 +1049,8 @@ mod tests {
     #[test]
     fn basic_method_and() -> anyhow::Result<()> {
         let input = name("foo")
-            .equal(int_value(5))
-            .and(name("bar").equal(str_value("baz")));
+            .equal(value(5))
+            .and(name("bar").equal(value("baz")));
 
         assert_eq!(
             input.build_tree()?,
@@ -1083,8 +1093,8 @@ mod tests {
     #[test]
     fn basic_method_or() -> anyhow::Result<()> {
         let input = name("foo")
-            .equal(int_value(5))
-            .or(name("bar").equal(str_value("baz")));
+            .equal(value(5))
+            .or(name("bar").equal(value("baz")));
 
         assert_eq!(
             input.build_tree()?,
@@ -1130,8 +1140,8 @@ mod tests {
     fn invalid_operand_error_and() -> anyhow::Result<()> {
         let input = name("")
             .size()
-            .greater_than_equal(int_value(5))
-            .and(name("[5]").between(int_value(3), int_value(9)));
+            .greater_than_equal(value(5))
+            .and(name("[5]").between(value(3), value(9)));
 
         assert_eq!(
             input
@@ -1151,8 +1161,8 @@ mod tests {
     fn invalid_operand_error_or() -> anyhow::Result<()> {
         let input = name("")
             .size()
-            .greater_than_equal(int_value(5))
-            .or(name("[5]").between(int_value(3), int_value(9)));
+            .greater_than_equal(value(5))
+            .or(name("[5]").between(value(3), value(9)));
 
         assert_eq!(
             input
@@ -1170,7 +1180,7 @@ mod tests {
 
     #[test]
     fn basic_method_not() -> anyhow::Result<()> {
-        let input = name("foo").equal(int_value(5)).not();
+        let input = name("foo").equal(value(5)).not();
 
         assert_eq!(
             input.build_tree()?,
@@ -1197,7 +1207,7 @@ mod tests {
 
     #[test]
     fn basic_function_not() -> anyhow::Result<()> {
-        let input = not(name("foo").equal(int_value(5)));
+        let input = not(name("foo").equal(value(5)));
 
         assert_eq!(
             input.build_tree()?,
@@ -1226,8 +1236,8 @@ mod tests {
     fn invalid_operand_error_not() -> anyhow::Result<()> {
         let input = name("")
             .size()
-            .greater_than_equal(int_value(5))
-            .or(name("[5]").between(int_value(3), int_value(9)))
+            .greater_than_equal(value(5))
+            .or(name("[5]").between(value(3), value(9)))
             .not();
 
         assert_eq!(
@@ -1246,7 +1256,7 @@ mod tests {
 
     #[test]
     fn basic_method_between_for_name() -> anyhow::Result<()> {
-        let input = name("foo").between(int_value(5), int_value(7));
+        let input = name("foo").between(value(5), value(7));
 
         assert_eq!(
             input.build_tree()?,
@@ -1277,7 +1287,7 @@ mod tests {
 
     #[test]
     fn basic_method_between_for_value() -> anyhow::Result<()> {
-        let input = int_value(6).between(int_value(5), int_value(7));
+        let input = value(6).between(value(5), value(7));
 
         assert_eq!(
             input.build_tree()?,
@@ -1314,7 +1324,7 @@ mod tests {
 
     #[test]
     fn basic_method_between_for_size() -> anyhow::Result<()> {
-        let input = name("foo").size().between(int_value(5), int_value(7));
+        let input = name("foo").size().between(value(5), value(7));
 
         assert_eq!(
             input.build_tree()?,
@@ -1345,7 +1355,7 @@ mod tests {
 
     #[test]
     fn invalid_operand_error_between() -> anyhow::Result<()> {
-        let input = name("[5]").between(int_value(3), name("foo..bar"));
+        let input = name("[5]").between(value(3), name("foo..bar"));
 
         assert_eq!(
             input

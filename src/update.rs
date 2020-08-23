@@ -2,7 +2,7 @@ use anyhow::bail;
 
 use std::collections::HashMap;
 
-use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, ValueBuilder};
+use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, ValueBuilderImpl};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go
 
@@ -83,14 +83,14 @@ impl OperationBuilder {
     }
 }
 
-pub fn delete(name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
+pub fn delete(name: Box<NameBuilder>, value: Box<dyn ValueBuilderImpl>) -> UpdateBuilder {
     let empty_update_builder = UpdateBuilder {
         operations: HashMap::new(),
     };
     empty_update_builder.delete(name, value)
 }
 
-pub fn add(name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
+pub fn add(name: Box<NameBuilder>, value: Box<dyn ValueBuilderImpl>) -> UpdateBuilder {
     let empty_update_builder = UpdateBuilder {
         operations: HashMap::new(),
     };
@@ -116,26 +116,34 @@ pub struct UpdateBuilder {
 }
 
 impl UpdateBuilder {
-    pub fn delete(mut self, name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
+    pub fn delete(
+        mut self,
+        name: Box<NameBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
+    ) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Delete)
             .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
-                value: Some(value),
+                value: Some(value.into()),
                 mode: OperationMode::Delete,
             });
 
         self
     }
 
-    pub fn add(mut self, name: Box<NameBuilder>, value: Box<ValueBuilder>) -> UpdateBuilder {
+    pub fn add(
+        mut self,
+        name: Box<NameBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
+    ) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Add)
             .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
-                value: Some(value),
+                value: Some(value.into()),
                 mode: OperationMode::Add,
             });
 

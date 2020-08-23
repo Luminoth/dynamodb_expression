@@ -1,8 +1,8 @@
 use anyhow::bail;
 
 use crate::{
-    error::ExpressionError, str_value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
-    ValueBuilder,
+    error::ExpressionError, value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
+    ValueBuilderImpl,
 };
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
@@ -130,33 +130,42 @@ impl TreeBuilder for KeyConditionBuilder {
     }
 }
 
-pub fn key_equal(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+pub fn key_equal(key: Box<KeyBuilder>, value: Box<dyn ValueBuilderImpl>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value],
+        operand_list: vec![key, value.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::Equal,
     }
 }
 
-pub fn key_less_than(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+pub fn key_less_than(
+    key: Box<KeyBuilder>,
+    value: Box<dyn ValueBuilderImpl>,
+) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value],
+        operand_list: vec![key, value.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThan,
     }
 }
 
-pub fn key_less_than_equal(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+pub fn key_less_than_equal(
+    key: Box<KeyBuilder>,
+    value: Box<dyn ValueBuilderImpl>,
+) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value],
+        operand_list: vec![key, value.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThanEqual,
     }
 }
 
-pub fn key_greater_than(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+pub fn key_greater_than(
+    key: Box<KeyBuilder>,
+    value: Box<dyn ValueBuilderImpl>,
+) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value],
+        operand_list: vec![key, value.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThan,
     }
@@ -164,10 +173,10 @@ pub fn key_greater_than(key: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyCo
 
 pub fn key_greater_than_equal(
     key: Box<KeyBuilder>,
-    value: Box<ValueBuilder>,
+    value: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value],
+        operand_list: vec![key, value.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThanEqual,
     }
@@ -199,18 +208,18 @@ pub fn key_and(left: KeyConditionBuilder, right: KeyConditionBuilder) -> KeyCond
 
 pub fn key_between(
     key: Box<KeyBuilder>,
-    upper: Box<ValueBuilder>,
-    lower: Box<ValueBuilder>,
+    upper: Box<dyn ValueBuilderImpl>,
+    lower: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, upper, lower],
+        operand_list: vec![key, upper.into(), lower.into()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::Between,
     }
 }
 
 pub fn key_begins_with(key: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyConditionBuilder {
-    let v = str_value(prefix.into());
+    let v = value(prefix.into());
     KeyConditionBuilder {
         operand_list: vec![key, v],
         key_condition_list: Vec::new(),
@@ -219,33 +228,42 @@ pub fn key_begins_with(key: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyCo
 }
 
 impl KeyBuilder {
-    pub fn equal(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+    pub fn equal(self: Box<KeyBuilder>, value: Box<dyn ValueBuilderImpl>) -> KeyConditionBuilder {
         key_equal(self, value)
     }
 
-    pub fn less_than(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+    pub fn less_than(
+        self: Box<KeyBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
+    ) -> KeyConditionBuilder {
         key_less_than(self, value)
     }
 
-    pub fn less_than_equal(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+    pub fn less_than_equal(
+        self: Box<KeyBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
+    ) -> KeyConditionBuilder {
         key_less_than_equal(self, value)
     }
 
-    pub fn greater_than(self: Box<KeyBuilder>, value: Box<ValueBuilder>) -> KeyConditionBuilder {
+    pub fn greater_than(
+        self: Box<KeyBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
+    ) -> KeyConditionBuilder {
         key_greater_than(self, value)
     }
 
     pub fn greater_than_equal(
         self: Box<KeyBuilder>,
-        value: Box<ValueBuilder>,
+        value: Box<dyn ValueBuilderImpl>,
     ) -> KeyConditionBuilder {
         key_greater_than_equal(self, value)
     }
 
     pub fn between(
         self: Box<KeyBuilder>,
-        upper: Box<ValueBuilder>,
-        lower: Box<ValueBuilder>,
+        upper: Box<dyn ValueBuilderImpl>,
+        lower: Box<dyn ValueBuilderImpl>,
     ) -> KeyConditionBuilder {
         key_between(self, upper, lower)
     }

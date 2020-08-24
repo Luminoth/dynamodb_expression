@@ -30,22 +30,6 @@ pub struct ValueBuilder<T> {
 
 impl<T> ValueBuilder<T> {}
 
-macro_rules! impl_value_builder {
-    ($type:ty) => {
-        impl ValueBuilderImpl for ValueBuilder<$type> {
-            fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-                self
-            }
-        }
-
-        impl PlusBuilder for ValueBuilder<$type> {}
-        impl MinusBuilder for ValueBuilder<$type> {}
-        impl ListAppendBuilder for ValueBuilder<$type> {}
-    };
-}
-
-impl_value_builder!(bool);
-
 impl OperandBuilder for ValueBuilder<bool> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         let expr = AttributeValue {
@@ -57,8 +41,6 @@ impl OperandBuilder for ValueBuilder<bool> {
         Ok(Operand::new(node))
     }
 }
-
-impl_value_builder!(i64);
 
 impl OperandBuilder for ValueBuilder<i64> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
@@ -72,8 +54,6 @@ impl OperandBuilder for ValueBuilder<i64> {
     }
 }
 
-impl_value_builder!(f64);
-
 impl OperandBuilder for ValueBuilder<f64> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         let expr = AttributeValue {
@@ -86,8 +66,6 @@ impl OperandBuilder for ValueBuilder<f64> {
     }
 }
 
-impl_value_builder!(&'static str);
-
 impl OperandBuilder for ValueBuilder<&str> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         let expr = AttributeValue {
@@ -99,8 +77,6 @@ impl OperandBuilder for ValueBuilder<&str> {
         Ok(Operand::new(node))
     }
 }
-
-impl_value_builder!(String);
 
 impl OperandBuilder for ValueBuilder<String> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
@@ -323,7 +299,7 @@ pub fn if_not_exists(
     })
 }
 
-trait PlusBuilder: OperandBuilder {
+pub trait PlusBuilder: OperandBuilder {
     fn plus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
     where
         Self: Sized + 'static,
@@ -332,7 +308,7 @@ trait PlusBuilder: OperandBuilder {
     }
 }
 
-trait MinusBuilder: OperandBuilder {
+pub trait MinusBuilder: OperandBuilder {
     fn minus(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
     where
         Self: Sized + 'static,
@@ -341,7 +317,7 @@ trait MinusBuilder: OperandBuilder {
     }
 }
 
-trait ListAppendBuilder: OperandBuilder {
+pub trait ListAppendBuilder: OperandBuilder {
     fn list_append(self: Box<Self>, right: Box<dyn OperandBuilder>) -> Box<SetValueBuilder>
     where
         Self: Sized + 'static,

@@ -2,7 +2,7 @@ use anyhow::bail;
 
 use crate::{
     /*error::ExpressionError,*/ value, ExpressionNode, NameBuilder, OperandBuilder,
-    SizeBuilder, TreeBuilder, ValueBuilder,
+    SizeBuilder, TreeBuilder,
 };
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
@@ -509,25 +509,6 @@ impl GreaterThanBuilder for NameBuilder {}
 impl GreaterThanEqualBuilder for NameBuilder {}
 impl BetweenBuilder for NameBuilder {}
 impl InBuilder for NameBuilder {}
-
-macro_rules! impl_value_builder {
-    ($type:ty) => {
-        impl EqualBuilder for ValueBuilder<$type> {}
-        impl NotEqualBuilder for ValueBuilder<$type> {}
-        impl LessThanBuilder for ValueBuilder<$type> {}
-        impl LessThanEqualBuilder for ValueBuilder<$type> {}
-        impl GreaterThanBuilder for ValueBuilder<$type> {}
-        impl GreaterThanEqualBuilder for ValueBuilder<$type> {}
-        impl BetweenBuilder for ValueBuilder<$type> {}
-        impl InBuilder for ValueBuilder<$type> {}
-    };
-}
-
-impl_value_builder!(bool);
-impl_value_builder!(i64);
-impl_value_builder!(f64);
-impl_value_builder!(&str);
-impl_value_builder!(String);
 
 impl EqualBuilder for SizeBuilder {}
 impl NotEqualBuilder for SizeBuilder {}

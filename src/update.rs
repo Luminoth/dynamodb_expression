@@ -126,7 +126,7 @@ impl UpdateBuilder {
             .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
-                value: Some(value.into()),
+                value: Some(value.into_operand_builder()),
                 mode: OperationMode::Delete,
             });
 
@@ -143,7 +143,7 @@ impl UpdateBuilder {
             .or_insert_with(Vec::new)
             .push(OperationBuilder {
                 name,
-                value: Some(value.into()),
+                value: Some(value.into_operand_builder()),
                 mode: OperationMode::Add,
             });
 

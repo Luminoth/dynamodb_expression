@@ -20,21 +20,23 @@ pub trait OperandBuilder {
 }
 
 // marker trait for working with generic ValueBuilders
-pub trait ValueBuilderImpl: OperandBuilder {}
-
-impl From<Box<dyn ValueBuilderImpl>> for Box<dyn OperandBuilder> {
-    fn from(v: Box<dyn ValueBuilderImpl>) -> Box<dyn OperandBuilder> {
-        v.into()
-    }
+pub trait ValueBuilderImpl: OperandBuilder {
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder>;
 }
 
 pub struct ValueBuilder<T> {
     value: T,
 }
 
+impl<T> ValueBuilder<T> {}
+
 macro_rules! impl_value_builder {
     ($type:ty) => {
-        impl ValueBuilderImpl for ValueBuilder<$type> {}
+        impl ValueBuilderImpl for ValueBuilder<$type> {
+            fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+                self
+            }
+        }
 
         impl PlusBuilder for ValueBuilder<$type> {}
         impl MinusBuilder for ValueBuilder<$type> {}
@@ -84,7 +86,7 @@ impl OperandBuilder for ValueBuilder<f64> {
     }
 }
 
-impl_value_builder!(&str);
+impl_value_builder!(&'static str);
 
 impl OperandBuilder for ValueBuilder<&str> {
     fn build_operand(&self) -> anyhow::Result<Operand> {

@@ -344,4 +344,40 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn projection() -> anyhow::Result<()> {
+        let input =
+            Builder::new().with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(ExpressionType::Projection => "#0, #1, #2".to_owned()),
+                names: hashmap!("#0".to_owned() => "foo".to_owned(), "#1".to_owned() => "bar".to_owned(), "#2".to_owned() => "baz".to_owned()),
+                ..Default::default()
+            },
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_condition() -> anyhow::Result<()> {
+        let input = Builder::new().with_key_condition(key("foo").equal(value(5)));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(ExpressionType::KeyCondition => "#0 = :0".to_owned()),
+                names: hashmap!("#0".to_owned() => "foo".to_owned()),
+                values: hashmap!(":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }),
+            },
+        );
+
+        Ok(())
+    }
 }

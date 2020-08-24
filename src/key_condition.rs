@@ -132,7 +132,7 @@ impl TreeBuilder for KeyConditionBuilder {
 
 pub fn key_equal(key: Box<KeyBuilder>, value: Box<dyn ValueBuilderImpl>) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value.into()],
+        operand_list: vec![key, value.into_operand_builder()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::Equal,
     }
@@ -143,7 +143,7 @@ pub fn key_less_than(
     value: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value.into()],
+        operand_list: vec![key, value.into_operand_builder()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThan,
     }
@@ -154,7 +154,7 @@ pub fn key_less_than_equal(
     value: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value.into()],
+        operand_list: vec![key, value.into_operand_builder()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::LessThanEqual,
     }
@@ -165,7 +165,7 @@ pub fn key_greater_than(
     value: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value.into()],
+        operand_list: vec![key, value.into_operand_builder()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThan,
     }
@@ -176,7 +176,7 @@ pub fn key_greater_than_equal(
     value: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, value.into()],
+        operand_list: vec![key, value.into_operand_builder()],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::GreaterThanEqual,
     }
@@ -212,7 +212,11 @@ pub fn key_between(
     lower: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
-        operand_list: vec![key, upper.into(), lower.into()],
+        operand_list: vec![
+            key,
+            upper.into_operand_builder(),
+            lower.into_operand_builder(),
+        ],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::Between,
     }

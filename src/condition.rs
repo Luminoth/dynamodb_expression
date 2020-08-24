@@ -340,10 +340,15 @@ pub fn between(
     }
 }
 
-// TODO: variadic macro
-pub fn r#in(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> ConditionBuilder {
+pub fn r#in(
+    left: Box<dyn OperandBuilder>,
+    mut right: Vec<Box<dyn OperandBuilder>>,
+) -> ConditionBuilder {
+    let mut operand_list = vec![left];
+    operand_list.append(&mut right);
+
     ConditionBuilder {
-        operand_list: vec![left, right],
+        operand_list,
         condition_list: Vec::new(),
         mode: ConditionMode::In,
     }
@@ -463,8 +468,7 @@ pub trait BetweenBuilder: OperandBuilder {
 }
 
 pub trait InBuilder: OperandBuilder {
-    // TODO: variadic macro
-    fn r#in(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
+    fn r#in(self: Box<Self>, right: Vec<Box<dyn OperandBuilder>>) -> ConditionBuilder
     where
         Self: Sized + 'static,
     {
@@ -1371,7 +1375,122 @@ mod tests {
         Ok(())
     }
 
-    // TODO: TestInCondition
+    #[test]
+    fn basic_method_in_for_name() -> anyhow::Result<()> {
+        let input = name("foo").r#in(vec![value(5), value(7)]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c IN ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_in_for_value() -> anyhow::Result<()> {
+        let input = value(6).r#in(vec![value(5), value(7)]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("6".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c IN ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_method_in_for_size() -> anyhow::Result<()> {
+        let input = name("foo").size().r#in(vec![value(5), value(7)]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n)"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("7".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c IN ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_in() -> anyhow::Result<()> {
+        let input = name("[5]").r#in(vec![value(3), name("foo..bar")]);
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
 
     // TODO: TestAttrExistsCondition
 

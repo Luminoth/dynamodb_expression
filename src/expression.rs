@@ -8,7 +8,7 @@ use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuil
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug)]
-enum ExpressionType {
+pub(crate) enum ExpressionType {
     Projection,
     KeyCondition,
     Condition,
@@ -16,7 +16,7 @@ enum ExpressionType {
     Update,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq)]
 pub struct Expression {
     expressions: HashMap<ExpressionType, String>,
     names: HashMap<String, String>,
@@ -70,6 +70,12 @@ pub struct Builder {
 }
 
 impl Builder {
+    pub fn new() -> Self {
+        Self {
+            expressions: HashMap::new(),
+        }
+    }
+
     pub fn with_condition(mut self, condition_builder: ConditionBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Condition, Box::new(condition_builder));
@@ -260,7 +266,7 @@ impl ExpressionNode {
                     alias
                 }
                 'c' => {
-                    let alias = self.substitute_child(index.1, alias_list)?;
+                    let alias = self.substitute_child(index.2, alias_list)?;
                     index.2 += 1;
                     alias
                 }
@@ -269,7 +275,7 @@ impl ExpressionNode {
 
             formatted_expression = format!(
                 "{}{}{}",
-                &formatted_expression.as_str()[..1],
+                &formatted_expression.as_str()[..idx],
                 alias,
                 &formatted_expression.as_str()[idx + 2..]
             );
@@ -298,5 +304,44 @@ impl ExpressionNode {
             bail!("substituteChild error: exprNode []children out of range");
         }
         self.children[index].build_expression_string(alias_list)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rusoto_dynamodb::AttributeValue;
+
+    use crate::*;
+
+    //https://stackoverflow.com/questions/27582739/how-do-i-create-a-hashmap-literal
+    macro_rules! hashmap(
+        { $($key:expr => $value:expr),+ } => {
+            {
+                let mut m = ::std::collections::HashMap::new();
+                $(
+                    m.insert($key, $value);
+                )+
+                m
+            }
+        };
+    );
+
+    #[test]
+    fn condition() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("foo").equal(value(5)));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(ExpressionType::Condition => "#0 = :0".to_owned()),
+                names: hashmap!("#0".to_owned() => "foo".to_owned()),
+                values: hashmap!(":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }),
+            },
+        );
+
+        Ok(())
     }
 }

@@ -66,12 +66,12 @@ pub struct ConditionBuilder {
 }
 
 impl ConditionBuilder {
-    // TODO: variadic macro
+    // TODO: variadic
     pub fn and(self, right: ConditionBuilder) -> ConditionBuilder {
         and(self, right)
     }
 
-    // TODO: variadic macro
+    // TODO: variadic
     pub fn or(self, right: ConditionBuilder) -> ConditionBuilder {
         or(self, right)
     }
@@ -302,7 +302,7 @@ pub fn greater_than_equal(
     }
 }
 
-// TODO: variadic macro
+// TODO: variadic
 pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: Vec::new(),
@@ -311,7 +311,7 @@ pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder 
     }
 }
 
-// TODO: variadic macro
+// TODO: variadic
 pub fn or(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: Vec::new(),
@@ -581,7 +581,7 @@ mod tests {
                         vec![AttributeValue {
                             s: Some("bar".to_owned()),
                             ..Default::default()
-                        },],
+                        }],
                         "$v"
                     ),
                 ],
@@ -1492,13 +1492,365 @@ mod tests {
         Ok(())
     }
 
-    // TODO: TestAttrExistsCondition
+    #[test]
+    fn basic_attr_exists() -> anyhow::Result<()> {
+        let input = name("foo").attribute_exists();
 
-    // TODO: TestAttrTypeCondition
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_names(vec!["foo".to_owned()], "$n")],
+                "attribute_exists ($c)"
+            )
+        );
 
-    // TODO: TestBeginsWithCondition
+        Ok(())
+    }
 
-    // TODO: TestContainsCondition
+    #[test]
+    fn basic_attr_not_exists() -> anyhow::Result<()> {
+        let input = name("foo").attribute_not_exists();
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_names(vec!["foo".to_owned()], "$n")],
+                "attribute_not_exists ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_attr_exists() -> anyhow::Result<()> {
+        let input = attribute_exists(name(""));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand_error_not_attr_exists() -> anyhow::Result<()> {
+        let input = attribute_not_exists(name(""));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_string() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::String);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("S".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_stringset() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::StringSet);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("SS".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_number() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::Number);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("N".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_binaryset() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::BinarySet);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("BS".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_boolean() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::Boolean);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("BOOL".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_null() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::Null);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("NULL".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_list() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::List);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("L".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_map() -> anyhow::Result<()> {
+        let input = name("foo").attribute_type(DynamoDBAttributeType::Map);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("M".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "attribute_type ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attr_type_invalid_operand() -> anyhow::Result<()> {
+        let input = name("").attribute_type(DynamoDBAttributeType::Map);
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_begins_with() -> anyhow::Result<()> {
+        let input = name("foo").begins_with("bar");
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "begins_with ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn begins_with_invalid_operand() -> anyhow::Result<()> {
+        let input = name("").begins_with("bar");
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_contains() -> anyhow::Result<()> {
+        let input = name("foo").contains("bar");
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "contains ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn contains_invalid_operand() -> anyhow::Result<()> {
+        let input = name("").contains("bar");
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
 
     // TODO: TestCompoundBuildCondition
 

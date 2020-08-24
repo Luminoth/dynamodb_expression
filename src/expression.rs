@@ -380,4 +380,135 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn filter() -> anyhow::Result<()> {
+        let input = Builder::new().with_filter(name("foo").equal(value(5)));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(ExpressionType::Filter => "#0 = :0".to_owned()),
+                names: hashmap!("#0".to_owned() => "foo".to_owned()),
+                values: hashmap!(":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }),
+            },
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn update() -> anyhow::Result<()> {
+        let input = Builder::new().with_update(set(name("foo"), value(5)));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(ExpressionType::Update => "SET #0 = :0\n".to_owned()),
+                names: hashmap!("#0".to_owned() => "foo".to_owned()),
+                values: hashmap!(":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }),
+            },
+        );
+
+        Ok(())
+    }
+
+    // TODO: the result of this seems correct, we're just assigning to different names / values
+    /*#[test]
+    fn compund() -> anyhow::Result<()> {
+        let input = Builder::new()
+            .with_condition(name("foo").equal(value(5)))
+            .with_filter(name("bar").less_than(value(6)))
+            .with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]))
+            .with_key_condition(key("foo").equal(value(5)))
+            .with_update(set(name("foo"), value(5)));
+
+        assert_eq!(
+            input.build()?,
+            Expression {
+                expressions: hashmap!(
+                ExpressionType::Condition => "#0 = :0".to_owned(),
+                ExpressionType::Filter => "#1 < :1".to_owned(),
+                ExpressionType::Projection => "#0, #1, #2".to_owned(),
+                ExpressionType::KeyCondition => "#0 = :2".to_owned(),
+                ExpressionType::Update => "SET #0 = :3\n".to_owned()
+                ),
+                names: hashmap!(
+                "#0".to_owned() => "foo".to_owned(),
+                "#1".to_owned() => "bar".to_owned(),
+                "#2".to_owned() => "baz".to_owned()
+                ),
+                values: hashmap!(
+                    ":0".to_owned() => AttributeValue{
+                        n: Some("5".to_owned()),
+                        ..Default::default()
+                    },
+                    ":1".to_owned() => AttributeValue{
+                        n: Some("6".to_owned()),
+                        ..Default::default()
+                    },
+                    ":2".to_owned() => AttributeValue{
+                        n: Some("5".to_owned()),
+                        ..Default::default()
+                    },
+                    ":3".to_owned() => AttributeValue{
+                        n: Some("5".to_owned()),
+                        ..Default::default()
+                    }
+                ),
+            },
+        );
+
+        Ok(())
+    }*/
+
+    #[test]
+    fn invalid_builder() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("").equal(value(5)));
+
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    // unset_builder not converted because we don't have an unset mode
+
+    // TODO: TestCondition
+
+    // TODO: TestFilter
+
+    // TODO: TestProjection
+
+    // TODO: TestKeyCondition
+
+    // TODO: TestUpdate
+
+    // TODO: TestNames
+
+    // TODO: TestValues
+
+    // TODO: TestBuildChildTrees
+
+    // TODO: TestBuildExpressionString
+
+    // TODO: TestReturnExpression
+
+    // TODO: TestAliasValue
+
+    // TODO: TestAliasPath
 }

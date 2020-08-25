@@ -488,17 +488,160 @@ mod tests {
 
     // unset_builder not converted because we don't have an unset mode
 
-    // TODO: TestCondition
+    #[test]
+    fn test_condition() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("foo").equal(value(5)));
 
-    // TODO: TestFilter
+        assert_eq!(*input.build()?.condition().unwrap(), "#0 = :0".to_owned(),);
 
-    // TODO: TestProjection
+        Ok(())
+    }
 
-    // TODO: TestKeyCondition
+    #[test]
+    fn test_condition_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
 
-    // TODO: TestUpdate
+        assert_eq!(input.build()?.condition(), None);
 
-    // TODO: TestNames
+        Ok(())
+    }
+
+    #[test]
+    fn test_filter() -> anyhow::Result<()> {
+        let input = Builder::new().with_filter(name("foo").equal(value(5)));
+
+        assert_eq!(*input.build()?.filter().unwrap(), "#0 = :0".to_owned(),);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_filter_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
+
+        assert_eq!(input.build()?.filter(), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_projection() -> anyhow::Result<()> {
+        let input =
+            Builder::new().with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]));
+
+        assert_eq!(
+            *input.build()?.projection().unwrap(),
+            "#0, #1, #2".to_owned(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_projection_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
+
+        assert_eq!(input.build()?.projection(), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_key_condition() -> anyhow::Result<()> {
+        let input = Builder::new().with_key_condition(key("foo").equal(value(5)));
+
+        assert_eq!(
+            *input.build()?.key_condition().unwrap(),
+            "#0 = :0".to_owned(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_key_condition_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
+
+        assert_eq!(input.build()?.key_condition(), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_update() -> anyhow::Result<()> {
+        let input = Builder::new().with_update(set(name("foo"), value(5)));
+
+        assert_eq!(
+            *input.build()?.update().unwrap(),
+            "SET #0 = :0\n".to_owned(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_update_multiple_sets() -> anyhow::Result<()> {
+        let input = Builder::new().with_update(
+            set(name("foo"), value(5))
+                .set(name("bar"), value(6))
+                .set(name("baz"), value(7)),
+        );
+
+        assert_eq!(
+            *input.build()?.update().unwrap(),
+            "SET #0 = :0, #1 = :1, #2 = :2\n".to_owned(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_update_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
+
+        assert_eq!(input.build()?.update(), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn names_projection() -> anyhow::Result<()> {
+        let input =
+            Builder::new().with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]));
+
+        assert_eq!(
+            *input.build()?.names(),
+            hashmap!(
+                "#0".to_owned() => "foo".to_owned(),
+                "#1".to_owned() => "bar".to_owned(),
+                "#2".to_owned() => "baz".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn names_aggregate() -> anyhow::Result<()> {
+        let input = Builder::new()
+            .with_condition(name("foo").equal(value(5)))
+            .with_filter(name("bar").equal(value(6)))
+            .with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]));
+
+        assert_eq!(
+            *input.build()?.names(),
+            hashmap!(
+                "#0".to_owned() => "foo".to_owned(),
+                "#1".to_owned() => "bar".to_owned(),
+                "#2".to_owned() => "baz".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    // names_unset not converted because we don't have an unset mode
+    // names_unset_condition not converted because we don't have an unset mode
 
     // TODO: TestValues
 

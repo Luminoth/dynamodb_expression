@@ -643,7 +643,22 @@ mod tests {
     // names_unset not converted because we don't have an unset mode
     // names_unset_condition not converted because we don't have an unset mode
 
-    // TODO: TestValues
+    #[test]
+    fn empty_lists_become_null() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("groups").equal(value(vec![])));
+
+        assert_eq!(
+            *input.build()?.values(),
+            hashmap!(
+                ":0".to_owned() => AttributeValue{
+                    null: Some(true),
+                    ..Default::default()
+                }
+            )
+        );
+
+        Ok(())
+    }
 
     // TODO: TestBuildChildTrees
 

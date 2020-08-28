@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::bail;
 use rusoto_dynamodb::AttributeValue;
 
@@ -21,6 +23,8 @@ pub trait OperandBuilder {
 
 // marker trait for working with generic ValueBuilders
 pub trait ValueBuilderImpl: OperandBuilder {
+    fn attribute_value(&self) -> AttributeValue;
+
     fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder>;
 }
 
@@ -32,61 +36,177 @@ impl<T> ValueBuilder<T> {}
 
 impl OperandBuilder for ValueBuilder<bool> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = AttributeValue {
-            bool: Some(self.value),
-            ..Default::default()
-        };
+        let expr = self.attribute_value();
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
         Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<bool> {
+    fn attribute_value(&self) -> AttributeValue {
+        AttributeValue {
+            bool: Some(self.value),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
     }
 }
 
 impl OperandBuilder for ValueBuilder<i64> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = AttributeValue {
-            n: Some(self.value.to_string()),
-            ..Default::default()
-        };
+        let expr = self.attribute_value();
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
         Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<i64> {
+    fn attribute_value(&self) -> AttributeValue {
+        AttributeValue {
+            n: Some(self.value.to_string()),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
     }
 }
 
 impl OperandBuilder for ValueBuilder<f64> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = AttributeValue {
-            n: Some(self.value.to_string()),
-            ..Default::default()
-        };
+        let expr = self.attribute_value();
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
         Ok(Operand::new(node))
     }
 }
 
-impl OperandBuilder for ValueBuilder<&str> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = AttributeValue {
-            s: Some(self.value.to_owned()),
+impl ValueBuilderImpl for ValueBuilder<f64> {
+    fn attribute_value(&self) -> AttributeValue {
+        AttributeValue {
+            n: Some(self.value.to_string()),
             ..Default::default()
-        };
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
+    }
+}
+
+impl OperandBuilder for ValueBuilder<&'static str> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = self.attribute_value();
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
         Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<&'static str> {
+    fn attribute_value(&self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.value.to_owned()),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
     }
 }
 
 impl OperandBuilder for ValueBuilder<String> {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = AttributeValue {
-            s: Some(self.value.clone()),
-            ..Default::default()
-        };
+        let expr = self.attribute_value();
 
         let node = ExpressionNode::from_values(vec![expr], "$v");
         Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<String> {
+    fn attribute_value(&self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.value.clone()),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
+    }
+}
+
+impl OperandBuilder for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = self.attribute_value();
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
+    fn attribute_value(&self) -> AttributeValue {
+        if self.value.is_empty() {
+            return AttributeValue {
+                null: Some(true),
+                ..Default::default()
+            };
+        }
+
+        let value = self.value.iter().map(|x| x.attribute_value()).collect();
+
+        AttributeValue {
+            l: Some(value),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
+    }
+}
+
+impl OperandBuilder for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
+    fn build_operand(&self) -> anyhow::Result<Operand> {
+        let expr = self.attribute_value();
+
+        let node = ExpressionNode::from_values(vec![expr], "$v");
+        Ok(Operand::new(node))
+    }
+}
+
+impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
+    fn attribute_value(&self) -> AttributeValue {
+        if self.value.is_empty() {
+            return AttributeValue {
+                null: Some(true),
+                ..Default::default()
+            };
+        }
+
+        let value = self
+            .value
+            .iter()
+            .map(|(k, v)| (k.clone(), v.attribute_value()))
+            .collect();
+
+        AttributeValue {
+            m: Some(value),
+            ..Default::default()
+        }
+    }
+
+    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+        self
     }
 }
 

@@ -17,12 +17,6 @@ pub use update::*;
 
 macro_rules! impl_value_builder {
     ($type:ty) => {
-        impl $crate::operand::ValueBuilderImpl for $crate::operand::ValueBuilder<$type> {
-            fn into_operand_builder(self: Box<Self>) -> Box<dyn $crate::operand::OperandBuilder> {
-                self
-            }
-        }
-
         impl $crate::operand::PlusBuilder for $crate::operand::ValueBuilder<$type> {}
         impl $crate::operand::MinusBuilder for $crate::operand::ValueBuilder<$type> {}
         impl $crate::operand::ListAppendBuilder for $crate::operand::ValueBuilder<$type> {}
@@ -43,3 +37,5 @@ impl_value_builder!(i64);
 impl_value_builder!(f64);
 impl_value_builder!(&'static str);
 impl_value_builder!(String);
+impl_value_builder!(Vec<Box<dyn ValueBuilderImpl>>);
+impl_value_builder!(std::collections::HashMap<String, Box<dyn ValueBuilderImpl>>);

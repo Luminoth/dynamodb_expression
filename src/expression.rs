@@ -660,6 +660,67 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn attribute_value_used_directly() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("key").equal(value(AttributeValue {
+            s: Some("value".to_owned()),
+            ..Default::default()
+        })));
+
+        assert_eq!(
+            *input.build()?.values(),
+            hashmap!(
+                ":0".to_owned() => AttributeValue{
+                    s: Some("value".to_owned()),
+                    ..Default::default()
+                }
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn values_condition() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(name("foo").equal(value(5)));
+
+        assert_eq!(
+            *input.build()?.values(),
+            hashmap!(
+                ":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn values_aggregate() -> anyhow::Result<()> {
+        let input = Builder::new()
+            .with_condition(name("foo").equal(value(5)))
+            .with_filter(name("bar").less_than(value(6)))
+            .with_projection(names_list(name("foo"), vec![name("bar"), name("baz")]));
+
+        assert_eq!(
+            *input.build()?.values(),
+            hashmap!(
+                ":0".to_owned() => AttributeValue{
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                },
+                ":1".to_owned() => AttributeValue{
+                    n: Some("6".to_owned()),
+                    ..Default::default()
+                }
+            )
+        );
+
+        Ok(())
+    }
+
     // TODO: TestBuildChildTrees
 
     // TODO: TestBuildExpressionString

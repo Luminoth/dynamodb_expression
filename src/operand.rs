@@ -7,12 +7,20 @@ use crate::{error::ExpressionError, ExpressionNode};
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
+macro_rules! into_operand_builder {
+    () => {
+        fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
+            self
+        }
+    };
+}
+
 pub struct Operand {
     pub(crate) expression_node: ExpressionNode,
 }
 
 impl Operand {
-    fn new(expression_node: ExpressionNode) -> Self {
+    pub(crate) fn new(expression_node: ExpressionNode) -> Self {
         Self { expression_node }
     }
 }
@@ -34,15 +42,6 @@ pub struct ValueBuilder<T> {
 
 impl<T> ValueBuilder<T> {}
 
-impl OperandBuilder for ValueBuilder<bool> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
-}
-
 impl ValueBuilderImpl for ValueBuilder<bool> {
     fn attribute_value(&self) -> AttributeValue {
         AttributeValue {
@@ -51,18 +50,7 @@ impl ValueBuilderImpl for ValueBuilder<bool> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
-}
-
-impl OperandBuilder for ValueBuilder<i64> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<i64> {
@@ -73,18 +61,7 @@ impl ValueBuilderImpl for ValueBuilder<i64> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
-}
-
-impl OperandBuilder for ValueBuilder<f64> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<f64> {
@@ -95,18 +72,7 @@ impl ValueBuilderImpl for ValueBuilder<f64> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
-}
-
-impl OperandBuilder for ValueBuilder<&'static str> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<&'static str> {
@@ -117,18 +83,7 @@ impl ValueBuilderImpl for ValueBuilder<&'static str> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
-}
-
-impl OperandBuilder for ValueBuilder<String> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<String> {
@@ -139,18 +94,15 @@ impl ValueBuilderImpl for ValueBuilder<String> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
+    into_operand_builder!();
 }
 
-impl OperandBuilder for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
+impl ValueBuilderImpl for ValueBuilder<AttributeValue> {
+    fn attribute_value(&self) -> AttributeValue {
+        self.value.clone()
     }
+
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
@@ -170,18 +122,7 @@ impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
-}
-
-impl OperandBuilder for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
-    fn build_operand(&self) -> anyhow::Result<Operand> {
-        let expr = self.attribute_value();
-
-        let node = ExpressionNode::from_values(vec![expr], "$v");
-        Ok(Operand::new(node))
-    }
+    into_operand_builder!();
 }
 
 impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
@@ -205,9 +146,7 @@ impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>
         }
     }
 
-    fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder> {
-        self
-    }
+    into_operand_builder!();
 }
 
 pub fn value<T>(value: T) -> Box<ValueBuilder<T>> {

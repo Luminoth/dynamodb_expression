@@ -113,7 +113,7 @@ impl Builder {
         self
     }
 
-    pub fn build(&self) -> anyhow::Result<Expression> {
+    pub fn build(self) -> anyhow::Result<Expression> {
         let (alias_list, expressions) = self.build_child_trees()?;
 
         let mut expression = Expression::new(expressions);

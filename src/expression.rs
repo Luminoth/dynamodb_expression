@@ -19,8 +19,8 @@ pub(crate) enum ExpressionType {
 #[derive(Default, Debug, PartialEq)]
 pub struct Expression {
     expressions: HashMap<ExpressionType, String>,
-    names: HashMap<String, String>,
-    values: HashMap<String, AttributeValue>,
+    names: Option<HashMap<String, String>>,
+    values: Option<HashMap<String, AttributeValue>>,
 }
 
 impl Expression {
@@ -51,11 +51,11 @@ impl Expression {
         self.return_expression(ExpressionType::Update)
     }
 
-    pub fn names(&self) -> &HashMap<String, String> {
+    pub fn names(&self) -> &Option<HashMap<String, String>> {
         &self.names
     }
 
-    pub fn values(&self) -> &HashMap<String, AttributeValue> {
+    pub fn values(&self) -> &Option<HashMap<String, AttributeValue>> {
         &self.values
     }
 
@@ -123,7 +123,7 @@ impl Builder {
             for (ind, val) in alias_list.names.iter().enumerate() {
                 names.insert(format!("#{}", ind), val.clone());
             }
-            expression.names = names;
+            expression.names = Some(names);
         }
 
         if !alias_list.values.is_empty() {
@@ -131,7 +131,7 @@ impl Builder {
             for (ind, val) in alias_list.values.iter().enumerate() {
                 values.insert(format!(":{}", ind), val.clone());
             }
-            expression.values = values;
+            expression.values = Some(values);
         }
 
         Ok(expression)
@@ -334,11 +334,11 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(ExpressionType::Condition => "#0 = :0".to_owned()),
-                names: hashmap!("#0".to_owned() => "foo".to_owned()),
-                values: hashmap!(":0".to_owned() => AttributeValue{
+                names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
-                }),
+                })),
             },
         );
 
@@ -354,7 +354,9 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(ExpressionType::Projection => "#0, #1, #2".to_owned()),
-                names: hashmap!("#0".to_owned() => "foo".to_owned(), "#1".to_owned() => "bar".to_owned(), "#2".to_owned() => "baz".to_owned()),
+                names: Some(
+                    hashmap!("#0".to_owned() => "foo".to_owned(), "#1".to_owned() => "bar".to_owned(), "#2".to_owned() => "baz".to_owned())
+                ),
                 ..Default::default()
             },
         );
@@ -370,11 +372,11 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(ExpressionType::KeyCondition => "#0 = :0".to_owned()),
-                names: hashmap!("#0".to_owned() => "foo".to_owned()),
-                values: hashmap!(":0".to_owned() => AttributeValue{
+                names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
-                }),
+                })),
             },
         );
 
@@ -389,11 +391,11 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(ExpressionType::Filter => "#0 = :0".to_owned()),
-                names: hashmap!("#0".to_owned() => "foo".to_owned()),
-                values: hashmap!(":0".to_owned() => AttributeValue{
+                names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
-                }),
+                })),
             },
         );
 
@@ -408,11 +410,11 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(ExpressionType::Update => "SET #0 = :0\n".to_owned()),
-                names: hashmap!("#0".to_owned() => "foo".to_owned()),
-                values: hashmap!(":0".to_owned() => AttributeValue{
+                names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
-                }),
+                })),
             },
         );
 
@@ -611,11 +613,11 @@ mod tests {
 
         assert_eq!(
             *input.build()?.names(),
-            hashmap!(
+            Some(hashmap!(
                 "#0".to_owned() => "foo".to_owned(),
                 "#1".to_owned() => "bar".to_owned(),
                 "#2".to_owned() => "baz".to_owned()
-            )
+            ))
         );
 
         Ok(())
@@ -630,11 +632,11 @@ mod tests {
 
         assert_eq!(
             *input.build()?.names(),
-            hashmap!(
+            Some(hashmap!(
                 "#0".to_owned() => "foo".to_owned(),
                 "#1".to_owned() => "bar".to_owned(),
                 "#2".to_owned() => "baz".to_owned()
-            )
+            ))
         );
 
         Ok(())
@@ -649,12 +651,12 @@ mod tests {
 
         assert_eq!(
             *input.build()?.values(),
-            hashmap!(
+            Some(hashmap!(
                 ":0".to_owned() => AttributeValue{
                     null: Some(true),
                     ..Default::default()
                 }
-            )
+            ))
         );
 
         Ok(())
@@ -669,12 +671,12 @@ mod tests {
 
         assert_eq!(
             *input.build()?.values(),
-            hashmap!(
+            Some(hashmap!(
                 ":0".to_owned() => AttributeValue{
                     s: Some("value".to_owned()),
                     ..Default::default()
                 }
-            )
+            ))
         );
 
         Ok(())
@@ -686,12 +688,12 @@ mod tests {
 
         assert_eq!(
             *input.build()?.values(),
-            hashmap!(
+            Some(hashmap!(
                 ":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
                 }
-            )
+            ))
         );
 
         Ok(())
@@ -706,7 +708,7 @@ mod tests {
 
         assert_eq!(
             *input.build()?.values(),
-            hashmap!(
+            Some(hashmap!(
                 ":0".to_owned() => AttributeValue{
                     n: Some("5".to_owned()),
                     ..Default::default()
@@ -715,11 +717,13 @@ mod tests {
                     n: Some("6".to_owned()),
                     ..Default::default()
                 }
-            )
+            ))
         );
 
         Ok(())
     }
+
+    // values_unset not converted because we don't have an unset mode
 
     // TODO: TestBuildChildTrees
 

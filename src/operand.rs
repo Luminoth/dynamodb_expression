@@ -25,7 +25,7 @@ impl Operand {
     }
 }
 
-pub trait OperandBuilder {
+pub trait OperandBuilder: Send {
     fn build_operand(&self) -> anyhow::Result<Operand>;
 }
 

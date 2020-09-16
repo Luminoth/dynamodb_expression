@@ -183,7 +183,7 @@ impl AliasList {
     }
 }
 
-pub(crate) trait TreeBuilder {
+pub(crate) trait TreeBuilder: Send {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode>;
 }
 

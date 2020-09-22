@@ -15,10 +15,6 @@ anyhow = "1.0.32"
 rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
 thiserror = "1.0.20"
 
-[dev.dependencies]
-rusoto_core = "0.45.0"
-rusoto_dynamodb = "0.45.0"
-
 [features]
 default = ["rusoto_dynamodb", "rusoto_dynamodb/default"]
 rustls = ["rusoto_dynamodb", "rusoto_dynamodb/rustls"]

@@ -24,6 +24,7 @@ enum KeyConditionMode {
     BeginsWith,
 }
 
+#[derive(Default)]
 pub struct KeyConditionBuilder {
     operand_list: Vec<Box<dyn OperandBuilder>>,
     key_condition_list: Vec<KeyConditionBuilder>,
@@ -277,5 +278,338 @@ impl KeyBuilder {
 
     pub fn begins_with(self: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyConditionBuilder {
         key_begins_with(self, prefix)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rusoto_dynamodb::AttributeValue;
+
+    use crate::*;
+
+    #[test]
+    fn key_equal() -> anyhow::Result<()> {
+        let input = key("foo").equal(value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c = $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_less_than() -> anyhow::Result<()> {
+        let input = key("foo").less_than(value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c < $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_less_than_equal() -> anyhow::Result<()> {
+        let input = key("foo").less_than_equal(value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c <= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_greater_than() -> anyhow::Result<()> {
+        let input = key("foo").greater_than(value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c > $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_greater_than_equal() -> anyhow::Result<()> {
+        let input = key("foo").greater_than_equal(value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c >= $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn unset_key_condition_builder() -> anyhow::Result<()> {
+        let input = KeyConditionBuilder::default();
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "KeyConditionBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_between() -> anyhow::Result<()> {
+        let input = key("foo").between(value(5), value(10));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("10".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "$c BETWEEN $c AND $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_begins_with() -> anyhow::Result<()> {
+        let input = key("foo").begins_with("bar");
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            s: Some("bar".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    ),
+                ],
+                "begins_with ($c, $c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn key_and() -> anyhow::Result<()> {
+        let input = key("foo")
+            .equal(value(5))
+            .and(key("bar").begins_with("baz"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            )
+                        ],
+                        "$c = $c",
+                    ),
+                    ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    s: Some("baz".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            ),
+                        ],
+                        "begins_with ($c, $c)",
+                    )
+                ],
+                "($c) AND ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn first_condition_not_equal() -> anyhow::Result<()> {
+        let input = key("foo")
+            .less_than(value(5))
+            .and(key("bar").begins_with("baz"));
+
+        assert_eq!(
+            input.build_tree().unwrap_err().to_string(),
+            "buildKeyCondition error: invalid key condition constructed"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn more_than_one_condition() -> anyhow::Result<()> {
+        let input = key("foo").equal(value(5)).and(
+            key("bar")
+                .equal(value(1))
+                .and(key("baz").begins_with("yar")),
+        );
+
+        assert_eq!(
+            input.build_tree().unwrap_err().to_string(),
+            "buildKeyCondition error: invalid key condition constructed"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn operand_error() -> anyhow::Result<()> {
+        let input = key("").equal(value("yikes".to_owned()));
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "KeyBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn build_child_nodes() -> anyhow::Result<()> {
+        let input = key("foo")
+            .equal(value("bar"))
+            .and(key("baz").less_than(value(10)));
+
+        assert_eq!(
+            input.build_child_nodes()?,
+            vec![
+                ExpressionNode::from_children_expression(
+                    vec![
+                        ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                        ExpressionNode::from_values(
+                            vec![AttributeValue {
+                                s: Some("bar".to_owned()),
+                                ..Default::default()
+                            }],
+                            "$v"
+                        )
+                    ],
+                    "$c = $c"
+                ),
+                ExpressionNode::from_children_expression(
+                    vec![
+                        ExpressionNode::from_names(vec!["baz".to_owned()], "$n"),
+                        ExpressionNode::from_values(
+                            vec![AttributeValue {
+                                n: Some("10".to_owned()),
+                                ..Default::default()
+                            }],
+                            "$v"
+                        )
+                    ],
+                    "$c < $c"
+                ),
+            ],
+        );
+
+        Ok(())
     }
 }

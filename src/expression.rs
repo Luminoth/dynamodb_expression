@@ -725,13 +725,247 @@ mod tests {
 
     // values_unset not converted because we don't have an unset mode
 
-    // TODO: TestBuildChildTrees
+    #[test]
+    fn basic_name() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(vec!["foo".to_owned()], "$n");
 
-    // TODO: TestBuildExpressionString
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            "#0"
+        );
 
-    // TODO: TestReturnExpression
+        Ok(())
+    }
 
-    // TODO: TestAliasValue
+    #[test]
+    fn basic_values() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_values(
+            vec![AttributeValue {
+                n: Some("5".to_owned()),
+                ..Default::default()
+            }],
+            "$v".to_owned(),
+        );
 
-    // TODO: TestAliasPath
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            ":0"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn nested_path() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(vec!["foo".to_owned(), "bar".to_owned()], "$n.$n");
+
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            "#0.#1"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn nested_path_with_index() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(
+            vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()],
+            "$n.$n[0].$n",
+        );
+
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            "#0.#1[0].#2"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_size() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(vec!["foo".to_owned(), "foo".to_owned()], "$n.$n");
+
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            "#0.#0"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn equal_expression() -> anyhow::Result<()> {
+        let node = ExpressionNode::from_children_expression(
+            vec![
+                ExpressionNode::from_names(vec!["foo".to_string()], "$n"),
+                ExpressionNode::from_values(
+                    vec![AttributeValue {
+                        n: Some("5".to_owned()),
+                        ..Default::default()
+                    }],
+                    "$v",
+                ),
+            ],
+            "$c = $c",
+        );
+
+        assert_eq!(
+            node.build_expression_string(&mut expression::AliasList::default())?,
+            "#0 = :0"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn missing_char() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(vec!["foo".to_owned()], "$n.$");
+
+        assert_eq!(
+            input
+                .build_expression_string(&mut expression::AliasList::default())
+                .unwrap_err()
+                .to_string(),
+            "buildexprNode error: invalid escape character",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn names_out_of_range() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_names(vec!["foo".to_owned()], "$n.$n");
+
+        assert_eq!(
+            input
+                .build_expression_string(&mut expression::AliasList::default())
+                .unwrap_err()
+                .to_string(),
+            "substitutePath error: exprNode []names out of range",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn values_out_of_range() -> anyhow::Result<()> {
+        let input = ExpressionNode::from_values(vec![], "$v");
+
+        assert_eq!(
+            input
+                .build_expression_string(&mut expression::AliasList::default())
+                .unwrap_err()
+                .to_string(),
+            "substituteValue error: exprNode []values out of range",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn childre_out_of_range() -> anyhow::Result<()> {
+        let input = ExpressionNode {
+            fmt_expression: "$!".to_owned(),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            input
+                .build_expression_string(&mut expression::AliasList::default())
+                .unwrap_err()
+                .to_string(),
+            "buildexprNode error: invalid escape rune !",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn unset_expression_node() -> anyhow::Result<()> {
+        let input = ExpressionNode::default();
+
+        assert_eq!(
+            input.build_expression_string(&mut expression::AliasList::default())?,
+            "".to_owned(),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn projection_exists() -> anyhow::Result<()> {
+        let input = Expression::new(hashmap!(
+            ExpressionType::Projection => "#0, #1, #2".to_owned()
+        ));
+
+        assert_eq!(
+            input.return_expression(ExpressionType::Projection),
+            Some(&"#0, #1, #2".to_owned()),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn projection_not_exists() -> anyhow::Result<()> {
+        let input = Expression::default();
+
+        assert_eq!(input.return_expression(ExpressionType::Projection), None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn first_item() -> anyhow::Result<()> {
+        let mut input = expression::AliasList::default();
+
+        assert_eq!(
+            input.alias_value(AttributeValue::default())?,
+            ":0".to_owned()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn fifth_item() -> anyhow::Result<()> {
+        let mut input = expression::AliasList {
+            values: vec![
+                AttributeValue::default(),
+                AttributeValue::default(),
+                AttributeValue::default(),
+                AttributeValue::default(),
+            ],
+            ..Default::default()
+        };
+
+        assert_eq!(
+            input.alias_value(AttributeValue::default())?,
+            ":4".to_owned()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn new_unique_item() -> anyhow::Result<()> {
+        let mut input = expression::AliasList::default();
+
+        assert_eq!(input.alias_path("foo")?, "#0".to_owned());
+
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_item() -> anyhow::Result<()> {
+        let mut input = expression::AliasList {
+            names: vec!["foo".to_owned(), "bar".to_owned()],
+            ..Default::default()
+        };
+
+        assert_eq!(input.alias_path("foo")?, "#0".to_owned());
+
+        Ok(())
+    }
 }

@@ -153,6 +153,7 @@ pub fn value<T>(value: T) -> Box<ValueBuilder<T>> {
     Box::new(ValueBuilder { value })
 }
 
+#[derive(Default)]
 pub struct NameBuilder {
     name: String,
 }

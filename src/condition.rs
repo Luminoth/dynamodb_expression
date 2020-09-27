@@ -1,15 +1,18 @@
 use anyhow::bail;
+use derivative::*;
 
 use crate::{
-    /*error::ExpressionError,*/ value, ExpressionNode, NameBuilder, OperandBuilder,
-    SizeBuilder, TreeBuilder,
+    error::ExpressionError, value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder,
+    TreeBuilder,
 };
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
+#[derivative(Default)]
 enum ConditionMode {
-    //Unset,
+    #[derivative(Default)]
+    Unset,
     Equal,
     NotEqual,
     LessThan,
@@ -59,6 +62,7 @@ impl DynamoDBAttributeType {
     }
 }
 
+#[derive(Default)]
 pub struct ConditionBuilder {
     operand_list: Vec<Box<dyn OperandBuilder>>,
     condition_list: Vec<ConditionBuilder>,
@@ -230,10 +234,10 @@ impl TreeBuilder for ConditionBuilder {
             ConditionMode::AttrType => Ok(ConditionBuilder::attr_type_build_condition(ret)?),
             ConditionMode::BeginsWith => Ok(ConditionBuilder::begins_with_build_condition(ret)?),
             ConditionMode::Contains => Ok(ConditionBuilder::contains_build_condition(ret)?),
-            /*ConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
+            ConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
                 "buildTree".to_owned(),
                 "ConditionBuilder".to_owned(),
-            )),*/
+            )),
             //_ => bail!("build condition error: unsupported mode: {:?}", self.mode),
         }
     }
@@ -1833,7 +1837,74 @@ mod tests {
         Ok(())
     }
 
-    // TODO: TestCompoundBuildCondition
+    #[test]
+    fn compound_and() -> anyhow::Result<()> {
+        let input = ConditionBuilder {
+            condition_list: vec![
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+            ],
+            mode: condition::ConditionMode::And,
+            ..Default::default()
+        };
 
-    // TODO: TestInBuildCondition
+        assert_eq!(
+            ConditionBuilder::compound_build_condition(&input, ExpressionNode::default())?
+                .fmt_expression,
+            "($c) AND ($c) AND ($c) AND ($c)",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn compound_or() -> anyhow::Result<()> {
+        let input = ConditionBuilder {
+            condition_list: vec![
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+                ConditionBuilder::default(),
+            ],
+            mode: condition::ConditionMode::Or,
+            ..Default::default()
+        };
+
+        assert_eq!(
+            ConditionBuilder::compound_build_condition(&input, ExpressionNode::default())?
+                .fmt_expression,
+            "($c) OR ($c) OR ($c) OR ($c) OR ($c) OR ($c) OR ($c)",
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn in_and() -> anyhow::Result<()> {
+        let input = ConditionBuilder {
+            operand_list: vec![
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+                Box::new(NameBuilder::default()),
+            ],
+            mode: condition::ConditionMode::And,
+            ..Default::default()
+        };
+
+        assert_eq!(
+            ConditionBuilder::in_build_condition(&input, ExpressionNode::default())?.fmt_expression,
+            "$c IN ($c, $c, $c, $c, $c, $c)",
+        );
+
+        Ok(())
+    }
 }

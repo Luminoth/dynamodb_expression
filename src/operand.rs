@@ -15,6 +15,7 @@ macro_rules! into_operand_builder {
     };
 }
 
+#[derive(Debug)]
 pub struct Operand {
     pub(crate) expression_node: ExpressionNode,
 }
@@ -383,5 +384,198 @@ pub trait ListAppendBuilder: OperandBuilder {
         Self: Sized + 'static,
     {
         list_append(self, right)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rusoto_dynamodb::AttributeValue;
+
+    use crate::*;
+
+    #[test]
+    fn basic_name() -> anyhow::Result<()> {
+        let input = name("foo");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_name() -> anyhow::Result<()> {
+        let input = name("foo.foo");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned(), "foo".to_owned()], "$n.$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_value() -> anyhow::Result<()> {
+        let input = value(5);
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_values(
+                vec![AttributeValue {
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }],
+                "$v"
+            ),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn attribute_value_as_value() -> anyhow::Result<()> {
+        let input = value(AttributeValue {
+            n: Some("5".to_owned()),
+            ..Default::default()
+        });
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_values(
+                vec![AttributeValue {
+                    n: Some("5".to_owned()),
+                    ..Default::default()
+                }],
+                "$v"
+            ),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn nested_name() -> anyhow::Result<()> {
+        let input = name("foo.bar");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned(), "bar".to_owned()], "$n.$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn nested_name_with_index() -> anyhow::Result<()> {
+        let input = name("foo.bar[0].baz");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(
+                vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()],
+                "$n.$n[0].$n"
+            ),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_size() -> anyhow::Result<()> {
+        let input = name("foo").size();
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned()], "size ($n)"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn basic_key() -> anyhow::Result<()> {
+        let input = key("foo");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn unset_key_error() -> anyhow::Result<()> {
+        let input = key("");
+
+        assert_eq!(
+            input
+                .build_operand()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "KeyBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn empty_name_error() -> anyhow::Result<()> {
+        let input = name("");
+
+        assert_eq!(
+            input
+                .build_operand()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_name() -> anyhow::Result<()> {
+        let input = name("foo..bar");
+
+        assert_eq!(
+            input
+                .build_operand()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_index() -> anyhow::Result<()> {
+        let input = name("[foo]");
+
+        assert_eq!(
+            input
+                .build_operand()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
     }
 }

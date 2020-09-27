@@ -1033,7 +1033,23 @@ mod tests {
         Ok(())
     }
 
-    // no_match_error not converted because we don't have an unset mode
+    #[test]
+    fn no_match_error() -> anyhow::Result<()> {
+        let input = ConditionBuilder::default();
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "ConditionBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
 
     #[test]
     fn basic_method_and() -> anyhow::Result<()> {

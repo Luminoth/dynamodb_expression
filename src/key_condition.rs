@@ -1,4 +1,5 @@
 use anyhow::bail;
+use derivative::*;
 
 use crate::{
     error::ExpressionError, value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
@@ -7,9 +8,11 @@ use crate::{
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
+#[derivative(Default)]
 enum KeyConditionMode {
-    //Unset,
+    #[derivative(Default)]
+    Unset,
     Invalid,
     Equal,
     LessThan,
@@ -119,10 +122,10 @@ impl TreeBuilder for KeyConditionBuilder {
             KeyConditionMode::BeginsWith => {
                 Ok(KeyConditionBuilder::begins_with_build_condition(ret)?)
             }
-            /*KeyConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
+            KeyConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
                 "buildTree".to_owned(),
                 "KeyConditionBuilder".to_owned(),
-            )),*/
+            )),
             KeyConditionMode::Invalid => {
                 bail!("buildKeyCondition error: invalid key condition constructed")
             } //_ => bail!("buildKeyCondition error: unsupported mode: {:?}", self.mode),

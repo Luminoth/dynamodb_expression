@@ -4,6 +4,7 @@ use crate::{error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder,
 
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go
 
+#[derive(Default)]
 pub struct ProjectionBuilder {
     #[allow(clippy::vec_box)]
     names: Vec<Box<NameBuilder>>,
@@ -70,5 +71,129 @@ impl NameBuilder {
         names: impl Into<Vec<Box<NameBuilder>>>,
     ) -> ProjectionBuilder {
         names_list(self, names)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn names_list_function_call() -> anyhow::Result<()> {
+        let input = names_list(name("foo"), vec![name("bar")]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n")
+                ],
+                "$c, $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn names_list_method_call() -> anyhow::Result<()> {
+        let input = name("foo").names_list(vec![name("bar")]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ],
+                "$c, $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_name() -> anyhow::Result<()> {
+        let input = name("foo")
+            .names_list(vec![name("bar")])
+            .add_names(vec![name("baz"), name("qux")]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["baz".to_owned()], "$n"),
+                    ExpressionNode::from_names(vec!["qux".to_owned()], "$n"),
+                ],
+                "$c, $c, $c, $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn build_projection_3() -> anyhow::Result<()> {
+        let input = names_list(name("foo"), vec![name("bar"), name("baz")]);
+
+        assert_eq!(input.build_tree()?.fmt_expression, "$c, $c, $c");
+
+        Ok(())
+    }
+
+    #[test]
+    fn build_projection_5() -> anyhow::Result<()> {
+        let input = ProjectionBuilder::default();
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "ProjectionBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn build_child_nodes() -> anyhow::Result<()> {
+        let input = names_list(name("foo"), vec![name("bar"), name("baz")]);
+
+        assert_eq!(
+            input.build_tree()?.children,
+            vec![
+                ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
+                ExpressionNode::from_names(vec!["baz".to_owned()], "$n"),
+            ],
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn operand_error() -> anyhow::Result<()> {
+        let input = names_list(name(""), vec![]);
+
+        assert_eq!(
+            input
+                .build_tree()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
     }
 }

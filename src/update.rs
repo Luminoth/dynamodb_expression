@@ -7,7 +7,7 @@ use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, ValueBuild
 // https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug)]
-enum OperationMode {
+pub(crate) enum OperationMode {
     Set,
     Remove,
     Add,
@@ -25,7 +25,7 @@ impl OperationMode {
     }
 }
 
-struct OperationBuilder {
+pub(crate) struct OperationBuilder {
     name: Box<NameBuilder>,
     value: Option<Box<dyn OperandBuilder>>,
     mode: OperationMode,
@@ -201,5 +201,109 @@ impl TreeBuilder for UpdateBuilder {
         }
 
         Ok(ret)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rusoto_dynamodb::AttributeValue;
+
+    use crate::*;
+
+    #[test]
+    fn set_operation() -> anyhow::Result<()> {
+        let input = OperationBuilder {
+            name: name("foo"),
+            value: Some(value(5)),
+            mode: OperationMode::Set,
+        };
+
+        assert_eq!(
+            input.build_operation()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c = $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_operation() -> anyhow::Result<()> {
+        let input = OperationBuilder {
+            name: name("foo"),
+            value: Some(value(5)),
+            mode: OperationMode::Add,
+        };
+
+        assert_eq!(
+            input.build_operation()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(
+                        vec![AttributeValue {
+                            n: Some("5".to_owned()),
+                            ..Default::default()
+                        }],
+                        "$v"
+                    )
+                ],
+                "$c $c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn remove_operation() -> anyhow::Result<()> {
+        let input = OperationBuilder {
+            name: name("foo"),
+            value: None,
+            mode: OperationMode::Remove,
+        };
+
+        assert_eq!(
+            input.build_operation()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_names(vec!["foo".to_owned()], "$n")],
+                "$c"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_operand() -> anyhow::Result<()> {
+        let input = OperationBuilder {
+            name: name(""),
+            value: None,
+            mode: OperationMode::Remove,
+        };
+
+        assert_eq!(
+            input
+                .build_operation()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
     }
 }

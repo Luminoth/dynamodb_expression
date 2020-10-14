@@ -1,6 +1,6 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 edition = "2018"
 
@@ -11,10 +11,10 @@ name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.32"
+anyhow = "1.0.33"
 derivative = "2.1.1"
 rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
-thiserror = "1.0.20"
+thiserror = "1.0.21"
 
 [features]
 default = ["rusoto_dynamodb", "rusoto_dynamodb/default"]

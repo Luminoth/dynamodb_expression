@@ -51,7 +51,7 @@ impl OperationBuilder {
 
         node.fmt_expression.push_str(match self.mode {
             OperationMode::Set => " = $c",
-            OperationMode::Add => " $c",
+            OperationMode::Add | OperationMode::Delete => " $c",
             _ => bail!(
                 "build update error: build operation error: unsupported mode: {:?}",
                 self.mode
@@ -301,6 +301,117 @@ mod tests {
             error::ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn set_update() -> anyhow::Result<()> {
+        let input = set(name("foo"), value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            ),
+                        ],
+                        "$c = $c"
+                    )],
+                    "$c"
+                )],
+                "SET $c\n"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn remove_update() -> anyhow::Result<()> {
+        let input = remove(name("foo"));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![ExpressionNode::from_children_expression(
+                        vec![ExpressionNode::from_names(vec!["foo".to_owned()], "$n")],
+                        "$c"
+                    )],
+                    "$c"
+                )],
+                "REMOVE $c\n"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn add_update() -> anyhow::Result<()> {
+        let input = add(name("foo"), value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            ),
+                        ],
+                        "$c $c"
+                    )],
+                    "$c"
+                )],
+                "ADD $c\n"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn delete_update() -> anyhow::Result<()> {
+        let input = delete(name("foo"), value(5));
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![ExpressionNode::from_children_expression(
+                    vec![ExpressionNode::from_children_expression(
+                        vec![
+                            ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                            ExpressionNode::from_values(
+                                vec![AttributeValue {
+                                    n: Some("5".to_owned()),
+                                    ..Default::default()
+                                }],
+                                "$v"
+                            ),
+                        ],
+                        "$c $c"
+                    )],
+                    "$c"
+                )],
+                "DELETE $c\n"
             )
         );
 

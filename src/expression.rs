@@ -488,7 +488,7 @@ mod tests {
         Ok(())
     }
 
-    // unset_builder not converted because we don't have an unset mode
+    // TODO: unset_builder
 
     #[test]
     fn test_condition() -> anyhow::Result<()> {
@@ -642,12 +642,32 @@ mod tests {
         Ok(())
     }
 
-    // names_unset not converted because we don't have an unset mode
-    // names_unset_condition not converted because we don't have an unset mode
+    // TODO: names_unset
+
+    // TODO: names_unset_condition
+
+    #[test]
+    fn empty_string_sets_become_null() -> anyhow::Result<()> {
+        let input =
+            Builder::new().with_condition(name("groups").equal(value(Vec::<String>::new())));
+
+        assert_eq!(
+            *input.build()?.values(),
+            Some(hashmap!(
+                ":0".to_owned() => AttributeValue{
+                    null: Some(true),
+                    ..Default::default()
+                }
+            ))
+        );
+
+        Ok(())
+    }
 
     #[test]
     fn empty_lists_become_null() -> anyhow::Result<()> {
-        let input = Builder::new().with_condition(name("groups").equal(value(vec![])));
+        let input = Builder::new()
+            .with_condition(name("groups").equal(value(Vec::<Box<dyn ValueBuilderImpl>>::new())));
 
         assert_eq!(
             *input.build()?.values(),
@@ -723,7 +743,7 @@ mod tests {
         Ok(())
     }
 
-    // values_unset not converted because we don't have an unset mode
+    // TODO: values_unset
 
     #[test]
     fn basic_name() -> anyhow::Result<()> {

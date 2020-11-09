@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
+use derivative::*;
 use rusoto_dynamodb::AttributeValue;
 
 use crate::{error::ExpressionError, ExpressionNode};
@@ -87,10 +88,46 @@ impl ValueBuilderImpl for ValueBuilder<&'static str> {
     into_operand_builder!();
 }
 
+impl ValueBuilderImpl for ValueBuilder<Vec<&'static str>> {
+    fn attribute_value(&self) -> AttributeValue {
+        if self.value.is_empty() {
+            return AttributeValue {
+                null: Some(true),
+                ..Default::default()
+            };
+        }
+
+        AttributeValue {
+            ss: Some(self.value.iter().map(|&x| x.to_owned()).collect()),
+            ..Default::default()
+        }
+    }
+
+    into_operand_builder!();
+}
+
 impl ValueBuilderImpl for ValueBuilder<String> {
     fn attribute_value(&self) -> AttributeValue {
         AttributeValue {
             s: Some(self.value.clone()),
+            ..Default::default()
+        }
+    }
+
+    into_operand_builder!();
+}
+
+impl ValueBuilderImpl for ValueBuilder<Vec<String>> {
+    fn attribute_value(&self) -> AttributeValue {
+        if self.value.is_empty() {
+            return AttributeValue {
+                null: Some(true),
+                ..Default::default()
+            };
+        }
+
+        AttributeValue {
+            ss: Some(self.value.clone()),
             ..Default::default()
         }
     }
@@ -269,34 +306,37 @@ pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
     Box::new(KeyBuilder { key: key.into() })
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
+#[derivative(Default)]
 enum SetValueMode {
-    //Unset,
+    #[derivative(Default)]
+    Unset,
     Plus,
     Minus,
     ListAppend,
     IfNotExists,
 }
 
+#[derive(Default)]
 pub struct SetValueBuilder {
-    left_operand: Box<dyn OperandBuilder>,
-    right_operand: Box<dyn OperandBuilder>,
+    left_operand: Option<Box<dyn OperandBuilder>>,
+    right_operand: Option<Box<dyn OperandBuilder>>,
     mode: SetValueMode,
 }
 
 impl OperandBuilder for SetValueBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
-        /*if self.mode == SetValueMode::Unset {
+        if self.mode == SetValueMode::Unset {
             bail!(ExpressionError::UnsetParameterError(
                 "BuildOperand".to_owned(),
                 "SetValueBuilder".to_owned(),
             ));
-        }*/
+        }
 
-        let left = self.left_operand.build_operand()?;
+        let left = self.left_operand.as_ref().unwrap().build_operand()?;
         let left_node = left.expression_node;
 
-        let right = self.right_operand.build_operand()?;
+        let right = self.right_operand.as_ref().unwrap().build_operand()?;
         let right_node = right.expression_node;
 
         let node = ExpressionNode::from_children_expression(
@@ -306,7 +346,7 @@ impl OperandBuilder for SetValueBuilder {
                 SetValueMode::Minus => "$c - $c",
                 SetValueMode::ListAppend => "list_append($c, $c)",
                 SetValueMode::IfNotExists => "if_not_exists($c, $c)",
-                //_ => bail!("build operand error: unsupported mode: {:?}", self.mode),
+                _ => bail!("build operand error: unsupported mode: {:?}", self.mode),
             }
             .to_owned(),
         );
@@ -320,8 +360,8 @@ pub fn plus(
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
     Box::new(SetValueBuilder {
-        left_operand,
-        right_operand,
+        left_operand: Some(left_operand),
+        right_operand: Some(right_operand),
         mode: SetValueMode::Plus,
     })
 }
@@ -331,8 +371,8 @@ pub fn minus(
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
     Box::new(SetValueBuilder {
-        left_operand,
-        right_operand,
+        left_operand: Some(left_operand),
+        right_operand: Some(right_operand),
         mode: SetValueMode::Minus,
     })
 }
@@ -342,8 +382,8 @@ pub fn list_append(
     right_operand: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
     Box::new(SetValueBuilder {
-        left_operand,
-        right_operand,
+        left_operand: Some(left_operand),
+        right_operand: Some(right_operand),
         mode: SetValueMode::ListAppend,
     })
 }
@@ -354,8 +394,8 @@ pub fn if_not_exists(
     value: Box<dyn OperandBuilder>,
 ) -> Box<SetValueBuilder> {
     Box::new(SetValueBuilder {
-        left_operand: name,
-        right_operand: value,
+        left_operand: Some(name),
+        right_operand: Some(value),
         mode: SetValueMode::IfNotExists,
     })
 }

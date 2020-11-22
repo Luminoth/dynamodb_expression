@@ -6,3 +6,4 @@ Port of [Go DynamoDB Expressions](https://github.com/aws/aws-sdk-go/tree/master/
 # TODO
 
 * Error strings need to be shared with tests better than copy / paste
+* Documentation

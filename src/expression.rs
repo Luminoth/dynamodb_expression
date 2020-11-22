@@ -70,6 +70,7 @@ pub struct Builder {
 }
 
 impl Builder {
+    // TODO: this isn't really needed
     pub fn new() -> Self {
         Self {
             expressions: HashMap::new(),
@@ -421,9 +422,11 @@ mod tests {
         Ok(())
     }
 
-    // TODO: the result of this seems correct, we're just assigning to different names / values
-    /*#[test]
-    fn compund() -> anyhow::Result<()> {
+    // TODO: not sure if it matters, but this test produces
+    // different results than the Go version, however the
+    // end dynamo outcome is the same for both
+    #[test]
+    fn compound() -> anyhow::Result<()> {
         let input = Builder::new()
             .with_condition(name("foo").equal(value(5)))
             .with_filter(name("bar").less_than(value(6)))
@@ -435,40 +438,40 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(
-                ExpressionType::Condition => "#0 = :0".to_owned(),
-                ExpressionType::Filter => "#1 < :1".to_owned(),
+                ExpressionType::Condition => "#0 = :1".to_owned(),
+                ExpressionType::Filter => "#1 < :2".to_owned(),
                 ExpressionType::Projection => "#0, #1, #2".to_owned(),
-                ExpressionType::KeyCondition => "#0 = :2".to_owned(),
+                ExpressionType::KeyCondition => "#0 = :0".to_owned(),
                 ExpressionType::Update => "SET #0 = :3\n".to_owned()
                 ),
-                names: hashmap!(
+                names: Some(hashmap!(
                 "#0".to_owned() => "foo".to_owned(),
                 "#1".to_owned() => "bar".to_owned(),
                 "#2".to_owned() => "baz".to_owned()
-                ),
-                values: hashmap!(
+                )),
+                values: Some(hashmap!(
                     ":0".to_owned() => AttributeValue{
                         n: Some("5".to_owned()),
                         ..Default::default()
                     },
                     ":1".to_owned() => AttributeValue{
-                        n: Some("6".to_owned()),
+                        n: Some("5".to_owned()),
                         ..Default::default()
                     },
                     ":2".to_owned() => AttributeValue{
-                        n: Some("5".to_owned()),
+                        n: Some("6".to_owned()),
                         ..Default::default()
                     },
                     ":3".to_owned() => AttributeValue{
                         n: Some("5".to_owned()),
                         ..Default::default()
                     }
-                ),
+                )),
             },
         );
 
         Ok(())
-    }*/
+    }
 
     #[test]
     fn invalid_builder() -> anyhow::Result<()> {
@@ -487,8 +490,6 @@ mod tests {
 
         Ok(())
     }
-
-    // TODO: unset_builder
 
     #[test]
     fn test_condition() -> anyhow::Result<()> {
@@ -642,9 +643,23 @@ mod tests {
         Ok(())
     }
 
-    // TODO: names_unset
+    #[test]
+    fn names_unset() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(ConditionBuilder::default());
 
-    // TODO: names_unset_condition
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError(
+                "buildTree".to_owned(),
+                "ConditionBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
 
     #[test]
     fn empty_string_sets_become_null() -> anyhow::Result<()> {
@@ -743,7 +758,14 @@ mod tests {
         Ok(())
     }
 
-    // TODO: values_unset
+    #[test]
+    fn values_unset() -> anyhow::Result<()> {
+        let input = Builder::new();
+
+        assert_eq!(*input.build()?.values(), None);
+
+        Ok(())
+    }
 
     #[test]
     fn basic_name() -> anyhow::Result<()> {

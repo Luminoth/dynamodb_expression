@@ -204,7 +204,7 @@ impl TreeBuilder for UpdateBuilder {
         for mode in self.operations.keys() {
             modes.push(mode);
         }
-        modes.sort();
+        modes.sort_unstable_by(|x, y| x.as_str().partial_cmp(y.as_str()).unwrap());
 
         for key in modes {
             ret.fmt_expression
@@ -487,8 +487,7 @@ mod tests {
         Ok(())
     }
 
-    // TODO: this is building in the wrong order
-    /*#[test]
+    #[test]
     fn compound_update() -> anyhow::Result<()> {
         let input = add(name("foo"), value(5))
             .set(name("foo"), value(5))
@@ -555,12 +554,12 @@ mod tests {
                         "$c"
                     )
                 ],
-                "ADD $c\nDELETE $c\nREMOVE %c\nSET %c\n"
+                "ADD $c\nDELETE $c\nREMOVE $c\nSET $c\n"
             )
         );
 
         Ok(())
-    }*/
+    }
 
     #[test]
     fn empty_update_builder() -> anyhow::Result<()> {
@@ -702,7 +701,7 @@ mod tests {
 
     // TODO: not sure how to massage this into working
     /*#[test]
-    fn list_append_lis_and_name() -> anyhow::Result<()> {
+    fn list_append_list_and_name() -> anyhow::Result<()> {
         let input = value(vec![1, 2, 3]).list_append(name("bar"));
 
         assert_eq!(

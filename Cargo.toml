@@ -1,20 +1,24 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
+license-file = "LICENSE"
+readme = "README.md"
+repository = "https://github.com/Luminoth/dynamodb_expression"
 edition = "2018"
+keywords = ["dynamodb"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Port of Go DynamoDB Expressions to Rust"
 
 [lib]
 name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 derivative = "2.1.1"
 rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
-thiserror = "1.0.21"
+thiserror = "1.0.22"
 
 [features]
 default = ["rusoto_dynamodb", "rusoto_dynamodb/default"]

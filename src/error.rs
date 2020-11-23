@@ -1,3 +1,5 @@
+//! Ported from [error.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/error.go)
+
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ExpressionError {
     #[error("{0} error: invalid parameter: {1}")]

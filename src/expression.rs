@@ -1,11 +1,11 @@
+//! Ported from [expression.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go)
+
 use std::collections::HashMap;
 
 use anyhow::bail;
 use rusoto_dynamodb::AttributeValue;
 
 use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
-
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug)]
 pub(crate) enum ExpressionType {
@@ -16,7 +16,7 @@ pub(crate) enum ExpressionType {
     Update,
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct Expression {
     expressions: HashMap<ExpressionType, String>,
     names: Option<HashMap<String, String>>,
@@ -158,7 +158,7 @@ impl Builder {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 struct AliasList {
     names: Vec<String>,
     values: Vec<AttributeValue>,
@@ -188,7 +188,7 @@ pub(crate) trait TreeBuilder: Send {
     fn build_tree(&self) -> anyhow::Result<ExpressionNode>;
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub(crate) struct ExpressionNode {
     pub(crate) names: Vec<String>,
     values: Vec<AttributeValue>,

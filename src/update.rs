@@ -1,3 +1,5 @@
+//! Ported from [update.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go)
+
 use anyhow::bail;
 use derivative::*;
 
@@ -7,8 +9,6 @@ use crate::{
     error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder,
     ValueBuilderImpl,
 };
-
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative)]
 #[derivative(Default)]

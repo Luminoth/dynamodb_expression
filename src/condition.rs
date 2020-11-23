@@ -1,3 +1,5 @@
+//! Ported from [condition.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go)
+
 use anyhow::bail;
 use derivative::*;
 
@@ -6,46 +8,105 @@ use crate::{
     TreeBuilder,
 };
 
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go
-
+/// ConditionMode specifies the types of the struct conditionBuilder,
+/// representing the different types of Conditions (i.e. And, Or, Between, ...)
 #[derive(Copy, Clone, PartialEq, Debug, Derivative)]
 #[derivative(Default)]
 enum ConditionMode {
+    /// Unset catches errors for unset ConditionBuilder structs
     #[derivative(Default)]
     Unset,
+
+    /// Equal represents the Equals Condition
     Equal,
+
+    /// NotEqual represents the Not Equals Condition
     NotEqual,
+
+    /// LessThan represents the LessThan Condition
     LessThan,
+
+    /// LessThanEqual represents the LessThanOrEqual Condition
     LessThanEqual,
+
+    /// GreaterThan represents the GreaterThan Condition
     GreaterThan,
+
+    /// GreaterThanEqual represents the GreaterThanEqual Condition
     GreaterThanEqual,
+
+    /// And represents the Logical And Condition
     And,
+
+    /// Or represents the Logical Or Condition
     Or,
+
+    /// Not represents the Logical Not Condition
     Not,
+
+    /// Between represents the Between Condition
     Between,
+
+    /// In represents the In Condition
     In,
+
+    /// AttrExists represents the Attribute Exists Condition
     AttrExists,
+
+    /// AttrNotExists represents the Attribute Not Exists Condition
     AttrNotExists,
+
+    /// AttrType represents the Attribute Type Condition
     AttrType,
+
+    /// BeginsWith represents the Begins With Condition
     BeginsWith,
+
+    // Contains represents the Contains Condition
     Contains,
 }
 
+/// DynamoDBAttributeType specifies the type of an DynamoDB item attribute.
+///
+/// This enum is used in the AttributeType() function in order to be explicit about
+/// the DynamoDB type that is being checked and ensure compile time checks.
+///
+/// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Functions)
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum DynamoDBAttributeType {
+    /// String represents the DynamoDB String type
     String,
+
+    /// StringSet represents the DynamoDB String Set type
     StringSet,
+
+    /// Number represents the DynamoDB Number type
     Number,
+
+    /// NumberSet represents the DynamoDB Number Set type
     NumberSet,
+
+    /// Binary represents the DynamoDB Binary type
     Binary,
+
+    /// BinarySet represents the DynamoDB Binary Set type
     BinarySet,
+
+    /// Boolean represents the DynamoDB Boolean type
     Boolean,
+
+    /// Null represents the DynamoDB Null type
     Null,
+
+    /// List represents the DynamoDB List type
     List,
+
+    /// Map represents the DynamoDB Map type
     Map,
 }
 
 impl DynamoDBAttributeType {
+    /// Returns the string representation of the DynamoDBAttributeType
     pub fn as_str(&self) -> &str {
         match self {
             DynamoDBAttributeType::String => "S",
@@ -62,6 +123,15 @@ impl DynamoDBAttributeType {
     }
 }
 
+/// ConditionBuilder represents Condition Expressions and Filter Expressions in DynamoDB.
+///
+/// ConditionBuilders are one of the building blocks of the Builder struct.
+/// Since Filter Expressions support all the same functions and formats
+/// as Condition Expressions, ConditionBuilders represents both types of Expressions.
+///
+/// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+///
+/// [More Information on Filter Expressions](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.FilterExpression)
 #[derive(Default)]
 pub struct ConditionBuilder {
     operand_list: Vec<Box<dyn OperandBuilder>>,
@@ -70,16 +140,79 @@ pub struct ConditionBuilder {
 }
 
 impl ConditionBuilder {
+    /// Returns a ConditionBuilder representing the logical AND clause of the argument ConditionBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the item attribute "Name" is
+    /// // equal to value "Generic Name" AND the item attribute "Age" is less
+    /// // than value 40
+    /// let condition = name("Name").equal(value("Generic Name")).and(name("Age").less_than(value(40)));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     // TODO: variadic
     pub fn and(self, right: ConditionBuilder) -> ConditionBuilder {
         and(self, right)
     }
 
+    /// Returns a ConditionBuilder representing the logical OR clause of the argument ConditionBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct. Note that Or() can take a variadic number of
+    /// ConditionBuilders as arguments.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the item attribute "Price" is
+    /// // less than the value 100 OR the item attribute "Rating" is greater than
+    /// // the value 8
+    /// let condition = name("Price").equal(value(100)).or(name("Rating").less_than(value(8)));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     // TODO: variadic
     pub fn or(self, right: ConditionBuilder) -> ConditionBuilder {
         or(self, right)
     }
 
+    /// Returns a ConditionBuilder representing the logical NOT clause of the argument ConditionBuilder.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the item attribute "Name"
+    /// // does not begin with "test"
+    /// let condition = name("Name").begins_with("test").not();
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     #[allow(clippy::should_implement_trait)]
     pub fn not(self) -> ConditionBuilder {
         not(self)
@@ -243,6 +376,26 @@ impl TreeBuilder for ConditionBuilder {
     }
 }
 
+/// Returns a ConditionBuilder representing the equality clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the equal clause of the item attribute "foo" and
+/// // the value 5
+/// let condition = equal(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn equal(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: vec![left, right],
@@ -251,6 +404,26 @@ pub fn equal(left: Box<dyn OperandBuilder>, right: Box<dyn OperandBuilder>) -> C
     }
 }
 
+/// Returns a ConditionBuilder representing the not equal clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the not equal clause of the item attribute "foo"
+/// // and the value 5
+/// let condition = not_equal(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn not_equal(
     left: Box<dyn OperandBuilder>,
     right: Box<dyn OperandBuilder>,
@@ -262,6 +435,26 @@ pub fn not_equal(
     }
 }
 
+/// Returns a ConditionBuilder representing the less than clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the less than clause of the item attribute "foo"
+/// // and the value 5
+/// let condition = less_than(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn less_than(
     left: Box<dyn OperandBuilder>,
     right: Box<dyn OperandBuilder>,
@@ -273,6 +466,26 @@ pub fn less_than(
     }
 }
 
+/// Returns a ConditionBuilder representing the less than equal to clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the less than equal to clause of the item attribute "foo"
+/// // and the value 5
+/// let condition = less_than_equal(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn less_than_equal(
     left: Box<dyn OperandBuilder>,
     right: Box<dyn OperandBuilder>,
@@ -284,6 +497,26 @@ pub fn less_than_equal(
     }
 }
 
+/// Returns a ConditionBuilder representing the greater than clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the greater than clause of the item attribute "foo"
+/// // and the value 5
+/// let condition = greater_than(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn greater_than(
     left: Box<dyn OperandBuilder>,
     right: Box<dyn OperandBuilder>,
@@ -295,6 +528,26 @@ pub fn greater_than(
     }
 }
 
+/// Returns a ConditionBuilder representing the greater than equal to clause of the two argument OperandBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the greater than equal to clause of the item attribute "foo"
+/// // and the value 5
+/// let condition = greater_than_equal(name("foo"), value(5));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn greater_than_equal(
     left: Box<dyn OperandBuilder>,
     right: Box<dyn OperandBuilder>,
@@ -306,6 +559,27 @@ pub fn greater_than_equal(
     }
 }
 
+/// Returns a ConditionBuilder representing the logical AND clause of the argument ConditionBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the condition where the item attribute "Name" is
+/// // equal to value "Generic Name" AND the item attribute "Age" is less
+/// // than value 40
+/// let condition = and(name("Name").equal(value("Generic Name")), name("Age").less_than(value(40)));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 // TODO: variadic
 pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
@@ -315,6 +589,28 @@ pub fn and(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder 
     }
 }
 
+/// Returns a ConditionBuilder representing the logical OR clause of the argument ConditionBuilders.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct. Note that Or() can take a variadic number of
+/// ConditionBuilders as arguments.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the condition where the item attribute "Price" is
+/// // less than the value 100 OR the item attribute "Rating" is greater than
+/// // the value 8
+/// let condition = or(name("Price").equal(value(100)), name("Rating").less_than(value(8)));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 // TODO: variadic
 pub fn or(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
@@ -324,6 +620,26 @@ pub fn or(left: ConditionBuilder, right: ConditionBuilder) -> ConditionBuilder {
     }
 }
 
+/// Returns a ConditionBuilder representing the logical NOT clause of the argument ConditionBuilder.
+///
+/// The resulting ConditionBuilder can be used as a
+/// part of other Condition Expressions or as an argument to the with_condition()
+/// method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the condition where the item attribute "Name"
+/// // does not begin with "test"
+/// let condition = not(name("Name").begins_with("test"));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn not(condition_builder: ConditionBuilder) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: Vec::new(),
@@ -405,6 +721,55 @@ pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionB
 }
 
 pub trait EqualBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the equality clause of the two argument OperandBuilders.
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the equal clause of the item attribute "foo" and
+    /// // the value 5
+    /// let condition = equal(name("foo"), value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the equal clause of the item attribute "foo" and
+    /// // the value 5
+    /// let condition = value(5).equal(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the equal clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -414,6 +779,57 @@ pub trait EqualBuilder: OperandBuilder {
 }
 
 pub trait NotEqualBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the not equal clause of the two argument OperandBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the not equal clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = name("foo").not_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the not equal clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = value(5).not_equal(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the not equal clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).not_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn not_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -423,6 +839,56 @@ pub trait NotEqualBuilder: OperandBuilder {
 }
 
 pub trait LessThanBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the less than clause of the two argument OperandBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = name("foo").less_than(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = value(5).less_than(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).less_than(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn less_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -432,6 +898,56 @@ pub trait LessThanBuilder: OperandBuilder {
 }
 
 pub trait LessThanEqualBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the less than equal to clause of the two argument OperandBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than equal to clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = name("foo").less_than_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than equal to clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = value(5).less_than_equal(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the less than equal to clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).less_than_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn less_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -441,6 +957,56 @@ pub trait LessThanEqualBuilder: OperandBuilder {
 }
 
 pub trait GreaterThanBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the greater than clause of the two argument OperandBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = name("foo").greater_than(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = value(5).greater_than(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).greater_than(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn greater_than(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -450,6 +1016,56 @@ pub trait GreaterThanBuilder: OperandBuilder {
 }
 
 pub trait GreaterThanEqualBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the greater than equal to clause of the two argument OperandBuilders.
+    ///
+    /// The resulting ConditionBuilder can be used as a
+    /// part of other Condition Expressions or as an argument to the with_condition()
+    /// method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than equal to clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = name("foo").greater_than_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than equal to clause of the item attribute "foo"
+    /// // and the value 5
+    /// let condition = value(5).greater_than_equal(name("foo"));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the greater than equal to clause of the size of the item
+    /// // attribute "foo" and the value 5
+    /// let condition = size(name("foo")).greater_than_equal(value(5));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn greater_than_equal(self: Box<Self>, right: Box<dyn OperandBuilder>) -> ConditionBuilder
     where
         Self: Sized + 'static,

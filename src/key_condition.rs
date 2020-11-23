@@ -1,3 +1,5 @@
+//! Ported from [key_condition.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go)
+
 use anyhow::bail;
 use derivative::*;
 
@@ -5,8 +7,6 @@ use crate::{
     error::ExpressionError, value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
     ValueBuilderImpl,
 };
-
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go
 
 #[derive(Copy, Clone, PartialEq, Debug, Derivative)]
 #[derivative(Default)]

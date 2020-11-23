@@ -1,4 +1,7 @@
-//#![deny(warnings)]
+//! Port of [Go DynamoDB Expressions](https://github.com/aws/aws-sdk-go/tree/master/service/dynamodb/expression) to Rust
+
+#![doc(html_root_url = "https://docs.rs/dynamodb_expression/0.1.2")]
+#![deny(warnings)]
 
 mod condition;
 pub mod error;

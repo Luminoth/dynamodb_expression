@@ -1,3 +1,5 @@
+//! Ported from [operand.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go)
+
 use std::collections::HashMap;
 
 use anyhow::bail;
@@ -5,8 +7,6 @@ use derivative::*;
 use rusoto_dynamodb::AttributeValue;
 
 use crate::{error::ExpressionError, ExpressionNode};
-
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/operand.go
 
 macro_rules! into_operand_builder {
     () => {
@@ -16,7 +16,7 @@ macro_rules! into_operand_builder {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Operand {
     pub(crate) expression_node: ExpressionNode,
 }
@@ -38,6 +38,7 @@ pub trait ValueBuilderImpl: OperandBuilder {
     fn into_operand_builder(self: Box<Self>) -> Box<dyn OperandBuilder>;
 }
 
+#[derive(Debug, Clone)]
 pub struct ValueBuilder<T> {
     value: T,
 }
@@ -191,7 +192,7 @@ pub fn value<T>(value: T) -> Box<ValueBuilder<T>> {
     Box::new(ValueBuilder { value })
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct NameBuilder {
     name: String,
 }
@@ -264,6 +265,7 @@ pub fn name(name: impl Into<String>) -> Box<NameBuilder> {
     Box::new(NameBuilder { name: name.into() })
 }
 
+#[derive(Debug, Clone)]
 pub struct SizeBuilder {
     name_builder: Box<NameBuilder>,
 }
@@ -282,6 +284,7 @@ pub fn size(name_builder: Box<NameBuilder>) -> Box<SizeBuilder> {
     name_builder.size()
 }
 
+#[derive(Debug, Clone)]
 pub struct KeyBuilder {
     key: String,
 }

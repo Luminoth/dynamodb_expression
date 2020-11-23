@@ -1,6 +1,6 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.2"
+version = "0.1.2" # remember to update html_root_url
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"

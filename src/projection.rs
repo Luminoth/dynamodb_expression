@@ -1,10 +1,10 @@
+//! Ported from [projection.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go)
+
 use anyhow::bail;
 
 use crate::{error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder};
 
-// https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go
-
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 pub struct ProjectionBuilder {
     #[allow(clippy::vec_box)]
     names: Vec<Box<NameBuilder>>,

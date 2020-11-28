@@ -18,61 +18,37 @@ pub(crate) enum ExpressionType {
     Update,
 }
 
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct Expression {
-    expressions: HashMap<ExpressionType, String>,
-    names: Option<HashMap<String, String>>,
-    values: Option<HashMap<String, AttributeValue>>,
-}
-
-impl Expression {
-    fn new(expressions: HashMap<ExpressionType, String>) -> Self {
-        Self {
-            expressions,
-            ..Default::default()
-        }
-    }
-
-    pub fn condition(&self) -> Option<&String> {
-        self.return_expression(ExpressionType::Condition)
-    }
-
-    pub fn filter(&self) -> Option<&String> {
-        self.return_expression(ExpressionType::Filter)
-    }
-
-    pub fn projection(&self) -> Option<&String> {
-        self.return_expression(ExpressionType::Projection)
-    }
-
-    pub fn key_condition(&self) -> Option<&String> {
-        self.return_expression(ExpressionType::KeyCondition)
-    }
-
-    pub fn update(&self) -> Option<&String> {
-        self.return_expression(ExpressionType::Update)
-    }
-
-    pub fn names(&self) -> &Option<HashMap<String, String>> {
-        &self.names
-    }
-
-    pub fn values(&self) -> &Option<HashMap<String, AttributeValue>> {
-        &self.values
-    }
-
-    fn return_expression(&self, expression_type: ExpressionType) -> Option<&String> {
-        self.expressions.get(&expression_type)
-    }
-}
-
+/// Represents the struct that builds the Expression struct. Methods such
+/// as with_projection() and with_condition() can add different kinds of DynamoDB
+/// Expressions to the Builder. The method build() creates an Expression struct
+/// with the specified types of DynamoDB Expressions.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// let key_cond = key("someKey").equal(value("someValue"));
+/// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+///
+/// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+/// let expr = builder.build().unwrap();
+///
+/// let query_input = rusoto_dynamodb::QueryInput{
+///   key_condition_expression: expr.key_condition().cloned(),
+///   projection_expression: expr.projection().cloned(),
+///   expression_attribute_names: expr.names().clone(),
+///   expression_attribute_values: expr.values().clone(),
+///   table_name: "SomeTable".to_owned(),
+///   ..Default::default()
+/// };
+/// ```
 #[derive(Default)]
 pub struct Builder {
     expressions: HashMap<ExpressionType, Box<dyn TreeBuilder>>,
 }
 
 impl Builder {
-    // TODO: this isn't really needed
     pub fn new() -> Self {
         Self {
             expressions: HashMap::new(),
@@ -157,6 +133,54 @@ impl Builder {
         }
 
         Ok((alias_list, formatted_expressions))
+    }
+}
+
+#[derive(Default, Debug, PartialEq, Clone)]
+pub struct Expression {
+    expressions: HashMap<ExpressionType, String>,
+    names: Option<HashMap<String, String>>,
+    values: Option<HashMap<String, AttributeValue>>,
+}
+
+impl Expression {
+    fn new(expressions: HashMap<ExpressionType, String>) -> Self {
+        Self {
+            expressions,
+            ..Default::default()
+        }
+    }
+
+    pub fn condition(&self) -> Option<&String> {
+        self.return_expression(ExpressionType::Condition)
+    }
+
+    pub fn filter(&self) -> Option<&String> {
+        self.return_expression(ExpressionType::Filter)
+    }
+
+    pub fn projection(&self) -> Option<&String> {
+        self.return_expression(ExpressionType::Projection)
+    }
+
+    pub fn key_condition(&self) -> Option<&String> {
+        self.return_expression(ExpressionType::KeyCondition)
+    }
+
+    pub fn update(&self) -> Option<&String> {
+        self.return_expression(ExpressionType::Update)
+    }
+
+    pub fn names(&self) -> &Option<HashMap<String, String>> {
+        &self.names
+    }
+
+    pub fn values(&self) -> &Option<HashMap<String, AttributeValue>> {
+        &self.values
+    }
+
+    fn return_expression(&self, expression_type: ExpressionType) -> Option<&String> {
+        self.expressions.get(&expression_type)
     }
 }
 

@@ -8,7 +8,7 @@ use crate::{
     TreeBuilder,
 };
 
-/// ConditionMode specifies the types of the struct conditionBuilder,
+/// Specifies the types of the struct conditionBuilder,
 /// representing the different types of Conditions (i.e. And, Or, Between, ...)
 #[derive(Copy, Clone, PartialEq, Debug, Derivative)]
 #[derivative(Default)]
@@ -66,7 +66,7 @@ enum ConditionMode {
     Contains,
 }
 
-/// DynamoDBAttributeType specifies the type of an DynamoDB item attribute.
+/// Specifies the type of an DynamoDB item attribute.
 ///
 /// This enum is used in the AttributeType() function in order to be explicit about
 /// the DynamoDB type that is being checked and ensure compile time checks.
@@ -123,7 +123,7 @@ impl DynamoDBAttributeType {
     }
 }
 
-/// ConditionBuilder represents Condition Expressions and Filter Expressions in DynamoDB.
+/// Represents Condition Expressions and Filter Expressions in DynamoDB.
 ///
 /// ConditionBuilders are one of the building blocks of the Builder struct.
 /// Since Filter Expressions support all the same functions and formats
@@ -371,7 +371,6 @@ impl TreeBuilder for ConditionBuilder {
                 "buildTree".to_owned(),
                 "ConditionBuilder".to_owned(),
             )),
-            //_ => bail!("build condition error: unsupported mode: {:?}", self.mode),
         }
     }
 }
@@ -648,6 +647,25 @@ pub fn not(condition_builder: ConditionBuilder) -> ConditionBuilder {
     }
 }
 
+/// Returns a ConditionBuilder representing the result of the
+/// BETWEEN function in DynamoDB Condition Expressions. The resulting
+/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// an argument to the with_condition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the condition where the value of the item
+/// // attribute "Rating" is between values 5 and 10
+/// let condition = between(name("Rating"), value(5), value(10));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn between(
     op: Box<dyn OperandBuilder>,
     lower: Box<dyn OperandBuilder>,
@@ -660,6 +678,26 @@ pub fn between(
     }
 }
 
+/// Returns a ConditionBuilder representing the result of the IN function
+/// in DynamoDB Condition Expressions. The resulting ConditionBuilder can be used
+/// as a part of other Condition Expressions or as an argument to the
+/// with_condition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the condition where the value of the item
+/// // attribute "Color" is checked against the list of colors "red",
+/// // "green", and "blue".
+/// let condition = r#in(name("Color"), vec![value("red"), value("green"), value("blue")]);
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn r#in(
     left: Box<dyn OperandBuilder>,
     mut right: Vec<Box<dyn OperandBuilder>>,
@@ -674,6 +712,25 @@ pub fn r#in(
     }
 }
 
+/// Returns a ConditionBuilder representing the result of the
+/// attribute_exists function in DynamoDB Condition Expressions. The resulting
+/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// an argument to the with_condition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the boolean condition of whether the item
+/// // attribute "Age" exists or not
+/// let condition = attribute_exists(name("Age"));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn attribute_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: vec![name],
@@ -682,6 +739,26 @@ pub fn attribute_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     }
 }
 
+/// Returns a ConditionBuilder representing the result of
+/// the attribute_not_exists function in DynamoDB Condition Expressions. The
+/// resulting ConditionBuilder can be used as a part of other Condition
+/// Expressions or as an argument to the with_condition() method for the Builder
+/// struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the boolean condition of whether the item
+/// // attribute "Age" exists or not
+/// let condition = attribute_not_exists(name("Age"));
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     ConditionBuilder {
         operand_list: vec![name],
@@ -690,6 +767,26 @@ pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
     }
 }
 
+/// Returns a ConditionBuilder representing the result of the
+/// attribute_type function in DynamoDB Condition Expressions. The DynamoDB types
+/// are represented by the type DynamoDBAttributeType. The resulting
+/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// an argument to the with_condition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the boolean condition of whether the item
+/// // attribute "Age" has the DynamoDB type Number or not
+/// let condition = attribute_type(name("Age"), DynamoDBAttributeType::Number);
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn attribute_type(
     name: Box<NameBuilder>,
     attr_type: DynamoDBAttributeType,
@@ -702,6 +799,25 @@ pub fn attribute_type(
     }
 }
 
+/// BeginsWith returns a ConditionBuilder representing the result of the
+/// begins_with function in DynamoDB Condition Expressions. The resulting
+/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// an argument to the WithCondition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the boolean condition of whether the item
+/// // attribute "CodeName" starts with the substring "Ben"
+/// let condition = begins_with(name("CodeName"), "Ben");
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> ConditionBuilder {
     let v = value(prefix.into());
     ConditionBuilder {
@@ -711,6 +827,25 @@ pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> Conditi
     }
 }
 
+/// Returns a ConditionBuilder representing the result of the
+/// contains function in DynamoDB Condition Expressions. The resulting
+/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// an argument to the WithCondition() method for the Builder struct.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // condition represents the boolean condition of whether the item
+/// // attribute "InviteList" has the value "Ben"
+/// let condition = contains(name("InviteList"), "Ben");
+///
+/// // Used in another Condition Expression
+/// let another_condition = not(condition);
+/// // Used to make an Builder
+/// let builder = Builder::new().with_condition(another_condition);
+/// ```
 pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionBuilder {
     let v = value(substr.into());
     ConditionBuilder {
@@ -1075,6 +1210,55 @@ pub trait GreaterThanEqualBuilder: OperandBuilder {
 }
 
 pub trait BetweenBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the result of the
+    /// BETWEEN function in DynamoDB Condition Expressions. The resulting
+    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// an argument to the with_condition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Rating" is between values 5 and 10
+    /// let condition = name("Rating").between(value(5), value(10));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Rating" is between values 5 and 10
+    /// let condition = value(6).between(value(5), value(10));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Rating" is between values 5 and 10
+    /// let condition = size(name("InviteList")).between(value(5), value(10));
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn between(
         self: Box<Self>,
         upper: Box<dyn OperandBuilder>,
@@ -1088,6 +1272,58 @@ pub trait BetweenBuilder: OperandBuilder {
 }
 
 pub trait InBuilder: OperandBuilder {
+    /// Returns a ConditionBuilder representing the result of the IN function
+    /// in DynamoDB Condition Expressions. The resulting ConditionBuilder can be used
+    /// as a part of other Condition Expressions or as an argument to the
+    /// with_condition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Color" is checked against the list of colors "red",
+    /// // "green", and "blue".
+    /// let condition = name("Color").r#in(vec![value("red"), value("green"), value("blue")]);
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Color" is checked against the list of colors "red",
+    /// // "green", and "blue".
+    /// let condition = value("yellow").r#in(vec![value("red"), value("green"), value("blue")]);
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the condition where the value of the item
+    /// // attribute "Color" is checked against the list of colors "red",
+    /// // "green", and "blue".
+    /// let condition = size(name("Donuts")).r#in(vec![value(12), value(24), value(36)]);
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     fn r#in(self: Box<Self>, right: Vec<Box<dyn OperandBuilder>>) -> ConditionBuilder
     where
         Self: Sized + 'static,
@@ -1097,14 +1333,73 @@ pub trait InBuilder: OperandBuilder {
 }
 
 impl NameBuilder {
+    /// Returns a ConditionBuilder representing the result of the
+    /// attribute_exists function in DynamoDB Condition Expressions. The resulting
+    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// an argument to the with_condition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the boolean condition of whether the item
+    /// // attribute "Age" exists or not
+    /// let condition = name("Age").attribute_exists();
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     pub fn attribute_exists(self: Box<NameBuilder>) -> ConditionBuilder {
         attribute_exists(self)
     }
 
+    /// Returns a ConditionBuilder representing the result of
+    /// the attribute_not_exists function in DynamoDB Condition Expressions. The
+    /// resulting ConditionBuilder can be used as a part of other Condition
+    /// Expressions or as an argument to the with_condition() method for the Builder
+    /// struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the boolean condition of whether the item
+    /// // attribute "Age" exists or not
+    /// let condition = name("Age").attribute_not_exists();
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     pub fn attribute_not_exists(self: Box<NameBuilder>) -> ConditionBuilder {
         attribute_not_exists(self)
     }
 
+    /// Returns a ConditionBuilder representing the result of the
+    /// attribute_type function in DynamoDB Condition Expressions. The DynamoDB types
+    /// are represented by the type DynamoDBAttributeType. The resulting
+    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// an argument to the with_condition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the boolean condition of whether the item
+    /// // attribute "Age" has the DynamoDB type Number or not
+    /// let condition = name("Age").attribute_type(DynamoDBAttributeType::Number);
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     pub fn attribute_type(
         self: Box<NameBuilder>,
         attr_type: DynamoDBAttributeType,
@@ -1112,10 +1407,48 @@ impl NameBuilder {
         attribute_type(self, attr_type)
     }
 
+    /// BeginsWith returns a ConditionBuilder representing the result of the
+    /// begins_with function in DynamoDB Condition Expressions. The resulting
+    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// an argument to the WithCondition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the boolean condition of whether the item
+    /// // attribute "CodeName" starts with the substring "Ben"
+    /// let condition = name("CodeName").begins_with("Ben");
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     pub fn begins_with(self: Box<NameBuilder>, prefix: impl Into<String>) -> ConditionBuilder {
         begins_with(self, prefix)
     }
 
+    /// Returns a ConditionBuilder representing the result of the
+    /// contains function in DynamoDB Condition Expressions. The resulting
+    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// an argument to the WithCondition() method for the Builder struct.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // condition represents the boolean condition of whether the item
+    /// // attribute "InviteList" has the value "Ben"
+    /// let condition = name("InviteList").contains("Ben");
+    ///
+    /// // Used in another Condition Expression
+    /// let another_condition = not(condition);
+    /// // Used to make an Builder
+    /// let builder = Builder::new().with_condition(another_condition);
+    /// ```
     pub fn contains(self: Box<NameBuilder>, substr: impl Into<String>) -> ConditionBuilder {
         contains(self, substr)
     }

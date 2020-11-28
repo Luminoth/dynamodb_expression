@@ -7,6 +7,8 @@ use rusoto_dynamodb::AttributeValue;
 
 use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
 
+/// Specifies the type of Expression. Declaring this type is used
+/// to eliminate magic strings
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug)]
 pub(crate) enum ExpressionType {
     Projection,

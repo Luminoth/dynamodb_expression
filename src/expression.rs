@@ -18,8 +18,9 @@ pub(crate) enum ExpressionType {
     Update,
 }
 
-/// Represents the struct that builds the Expression struct. Methods such
-/// as with_projection() and with_condition() can add different kinds of DynamoDB
+/// Represents the struct that builds the Expression struct.
+///
+/// Methods such as with_projection() and with_condition() can add different kinds of DynamoDB
 /// Expressions to the Builder. The method build() creates an Expression struct
 /// with the specified types of DynamoDB Expressions.
 ///
@@ -49,12 +50,49 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Returns an empty Builder struct.
+    ///
+    /// Methods such as with_projection()
+    /// and with_condition() can add different kinds of DynamoDB Expressions to the
+    /// Builder. The method build() creates an Expression struct with the specified
+    /// types of DynamoDB Expressions.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+    /// ```
     pub fn new() -> Self {
         Self {
             expressions: HashMap::new(),
         }
     }
 
+    /// Adds the argument ConditionBuilder as a Condition
+    /// Expression to the argument Builder.
+    ///
+    /// If the argument Builder already has a
+    /// ConditionBuilder representing a Condition Expression, with_condition()
+    /// overwrites the existing ConditionBuilder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = Builder::new().with_condition(cond);
+    ///
+    /// // add other DynamoDB Expressions to the builder.
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    /// let builder = builder.with_projection(proj);
+    /// // create an Expression struct
+    /// let expr = builder.build().unwrap();
+    /// ```
     pub fn with_condition(mut self, condition_builder: ConditionBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Condition, Box::new(condition_builder));
@@ -62,6 +100,27 @@ impl Builder {
         self
     }
 
+    /// Adds the argument ProjectionBuilder as a Projection
+    /// Expression to the argument Builder.
+    ///
+    /// If the argument Builder already has a
+    /// ProjectionBuilder representing a Projection Expression, with_projection()
+    /// overwrites the existing ProjectionBuilder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    /// let builder = Builder::new().with_projection(proj);
+    ///
+    /// // add other DynamoDB Expressions to the builder.
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = builder.with_condition(cond);
+    /// // create an Expression struct
+    /// let expr = builder.build().unwrap();
+    /// ```
     pub fn with_projection(mut self, projection_builder: ProjectionBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Projection, Box::new(projection_builder));
@@ -69,6 +128,27 @@ impl Builder {
         self
     }
 
+    /// Adds the argument KeyConditionBuilder as a Key
+    /// Condition Expression to the argument Builder.
+    ///
+    /// If the argument Builder already
+    /// has a KeyConditionBuilder representing a Key Condition Expression,
+    /// with_key_condition() overwrites the existing KeyConditionBuilder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// let builder = Builder::new().with_key_condition(key_cond);
+    ///
+    /// // add other DynamoDB Expressions to the builder.
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = builder.with_condition(cond);
+    /// // create an Expression struct
+    /// let expr = builder.build().unwrap();
+    /// ```
     pub fn with_key_condition(mut self, key_condition_builder: KeyConditionBuilder) -> Builder {
         self.expressions.insert(
             ExpressionType::KeyCondition,
@@ -78,6 +158,27 @@ impl Builder {
         self
     }
 
+    /// Adds the argument ConditionBuilder as a Filter Expression
+    /// to the argument Builder.
+    ///
+    /// If the argument Builder already has a
+    /// ConditionBuilder representing a Filter Expression, with_filter()
+    /// overwrites the existing ConditionBuilder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let filt = name("someKey").equal(value("someValue"));
+    /// let builder = Builder::new().with_filter(filt);
+    ///
+    /// // add other DynamoDB Expressions to the builder.
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = builder.with_condition(cond);
+    /// // create an Expression struct
+    /// let expr = builder.build().unwrap();
+    /// ```
     pub fn with_filter(mut self, filter: ConditionBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Filter, Box::new(filter));
@@ -85,6 +186,27 @@ impl Builder {
         self
     }
 
+    /// Adds the argument UpdateBuilder as an Update Expression
+    /// to the argument Builder.
+    ///
+    /// If the argument Builder already has a UpdateBuilder
+    /// representing a Update Expression, with_update() overwrites the existing
+    /// UpdateBuilder.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let update = set(name("someKey"), value("someValue"));
+    /// let builder = Builder::new().with_update(update);
+    ///
+    /// // add other DynamoDB Expressions to the builder.
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = builder.with_condition(cond);
+    /// // create an Expression struct
+    /// let expr = builder.build().unwrap();
+    /// ```
     pub fn with_update(mut self, update_builder: UpdateBuilder) -> Builder {
         self.expressions
             .insert(ExpressionType::Update, Box::new(update_builder));
@@ -92,6 +214,38 @@ impl Builder {
         self
     }
 
+    /// Builds an Expression struct representing multiple types of DynamoDB
+    /// Expressions.
+    ///
+    /// Getter methods on the resulting Expression struct returns the
+    /// DynamoDB Expression strings as well as the maps that correspond to
+    /// ExpressionAttributeNames and ExpressionAttributeValues. Calling build() on an
+    /// empty Builder returns the typed error EmptyParameterError.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// // key_cond represents the Key Condition Expression
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// // proj represents the Projection Expression
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    ///
+    /// // Add key_cond and proj to builder as a Key Condition and Projection
+    /// // respectively
+    /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+    /// let expr = builder.build().unwrap();
+    ///
+    /// let query_nput = rusoto_dynamodb::QueryInput{
+    ///   key_condition_expression: expr.key_condition().cloned(),
+    ///   projection_expression: expr.projection().cloned(),
+    ///   expression_attribute_names: expr.names().clone(),
+    ///   expression_attribute_values: expr.values().clone(),
+    ///   table_name: "SomeTable".to_owned(),
+    ///   ..Default::default()
+    /// };
+    /// ```
     pub fn build(self) -> anyhow::Result<Expression> {
         let (alias_list, expressions) = self.build_child_trees()?;
 
@@ -136,6 +290,35 @@ impl Builder {
     }
 }
 
+/// Represents a collection of DynamoDB Expressions.
+///
+/// The getter methods of the Expression struct retrieves the formatted DynamoDB
+/// Expressions, ExpressionAttributeNames, and ExpressionAttributeValues.
+///
+/// # Example
+///
+/// ```
+/// use dynamodb_expression::*;
+///
+/// // key_cond represents the Key Condition Expression
+/// let key_cond = key("someKey").equal(value("someValue"));
+/// // proj represents the Projection Expression
+/// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+///
+/// // Add key_cond and proj to builder as a Key Condition and Projection
+/// // respectively
+/// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+/// let expr = builder.build().unwrap();
+///
+/// let query_input = rusoto_dynamodb::QueryInput{
+///   key_condition_expression: expr.key_condition().cloned(),
+///   projection_expression: expr.projection().cloned(),
+///   expression_attribute_names: expr.names().clone(),
+///   expression_attribute_values: expr.values().clone(),
+///   table_name: "SomeTable".to_owned(),
+///   ..Default::default()
+/// };
+/// ```
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Expression {
     expressions: HashMap<ExpressionType, String>,

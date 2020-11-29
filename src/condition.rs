@@ -648,8 +648,9 @@ pub fn not(condition_builder: ConditionBuilder) -> ConditionBuilder {
 }
 
 /// Returns a ConditionBuilder representing the result of the
-/// BETWEEN function in DynamoDB Condition Expressions. The resulting
-/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// BETWEEN function in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the with_condition() method for the Builder struct.
 ///
 /// # Example
@@ -679,7 +680,9 @@ pub fn between(
 }
 
 /// Returns a ConditionBuilder representing the result of the IN function
-/// in DynamoDB Condition Expressions. The resulting ConditionBuilder can be used
+/// in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used
 /// as a part of other Condition Expressions or as an argument to the
 /// with_condition() method for the Builder struct.
 ///
@@ -713,8 +716,9 @@ pub fn r#in(
 }
 
 /// Returns a ConditionBuilder representing the result of the
-/// attribute_exists function in DynamoDB Condition Expressions. The resulting
-/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// attribute_exists function in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the with_condition() method for the Builder struct.
 ///
 /// # Example
@@ -740,8 +744,9 @@ pub fn attribute_exists(name: Box<NameBuilder>) -> ConditionBuilder {
 }
 
 /// Returns a ConditionBuilder representing the result of
-/// the attribute_not_exists function in DynamoDB Condition Expressions. The
-/// resulting ConditionBuilder can be used as a part of other Condition
+/// the attribute_not_exists function in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used as a part of other Condition
 /// Expressions or as an argument to the with_condition() method for the Builder
 /// struct.
 ///
@@ -768,8 +773,9 @@ pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
 }
 
 /// Returns a ConditionBuilder representing the result of the
-/// attribute_type function in DynamoDB Condition Expressions. The DynamoDB types
-/// are represented by the type DynamoDBAttributeType. The resulting
+/// attribute_type function in DynamoDB Condition Expressions.
+///
+/// The DynamoDB types are represented by the type DynamoDBAttributeType. The resulting
 /// ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the with_condition() method for the Builder struct.
 ///
@@ -800,8 +806,9 @@ pub fn attribute_type(
 }
 
 /// BeginsWith returns a ConditionBuilder representing the result of the
-/// begins_with function in DynamoDB Condition Expressions. The resulting
-/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// begins_with function in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the WithCondition() method for the Builder struct.
 ///
 /// # Example
@@ -828,8 +835,9 @@ pub fn begins_with(name: Box<NameBuilder>, prefix: impl Into<String>) -> Conditi
 }
 
 /// Returns a ConditionBuilder representing the result of the
-/// contains function in DynamoDB Condition Expressions. The resulting
-/// ConditionBuilder can be used as a part of other Condition Expressions or as
+/// contains function in DynamoDB Condition Expressions.
+///
+/// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the WithCondition() method for the Builder struct.
 ///
 /// # Example
@@ -857,6 +865,7 @@ pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionB
 
 pub trait EqualBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the equality clause of the two argument OperandBuilders.
+    ///
     /// The resulting ConditionBuilder can be used as a
     /// part of other Condition Expressions or as an argument to the with_condition()
     /// method for the Builder struct.
@@ -1211,8 +1220,9 @@ pub trait GreaterThanEqualBuilder: OperandBuilder {
 
 pub trait BetweenBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the result of the
-    /// BETWEEN function in DynamoDB Condition Expressions. The resulting
-    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// BETWEEN function in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the with_condition() method for the Builder struct.
     ///
     /// # Example
@@ -1273,7 +1283,9 @@ pub trait BetweenBuilder: OperandBuilder {
 
 pub trait InBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the result of the IN function
-    /// in DynamoDB Condition Expressions. The resulting ConditionBuilder can be used
+    /// in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used
     /// as a part of other Condition Expressions or as an argument to the
     /// with_condition() method for the Builder struct.
     ///
@@ -1334,8 +1346,9 @@ pub trait InBuilder: OperandBuilder {
 
 impl NameBuilder {
     /// Returns a ConditionBuilder representing the result of the
-    /// attribute_exists function in DynamoDB Condition Expressions. The resulting
-    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// attribute_exists function in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the with_condition() method for the Builder struct.
     ///
     /// # Example
@@ -1357,8 +1370,9 @@ impl NameBuilder {
     }
 
     /// Returns a ConditionBuilder representing the result of
-    /// the attribute_not_exists function in DynamoDB Condition Expressions. The
-    /// resulting ConditionBuilder can be used as a part of other Condition
+    /// the attribute_not_exists function in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used as a part of other Condition
     /// Expressions or as an argument to the with_condition() method for the Builder
     /// struct.
     ///
@@ -1381,8 +1395,9 @@ impl NameBuilder {
     }
 
     /// Returns a ConditionBuilder representing the result of the
-    /// attribute_type function in DynamoDB Condition Expressions. The DynamoDB types
-    /// are represented by the type DynamoDBAttributeType. The resulting
+    /// attribute_type function in DynamoDB Condition Expressions.
+    ///
+    /// The DynamoDB types are represented by the type DynamoDBAttributeType. The resulting
     /// ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the with_condition() method for the Builder struct.
     ///
@@ -1408,8 +1423,9 @@ impl NameBuilder {
     }
 
     /// BeginsWith returns a ConditionBuilder representing the result of the
-    /// begins_with function in DynamoDB Condition Expressions. The resulting
-    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// begins_with function in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the WithCondition() method for the Builder struct.
     ///
     /// # Example
@@ -1431,8 +1447,9 @@ impl NameBuilder {
     }
 
     /// Returns a ConditionBuilder representing the result of the
-    /// contains function in DynamoDB Condition Expressions. The resulting
-    /// ConditionBuilder can be used as a part of other Condition Expressions or as
+    /// contains function in DynamoDB Condition Expressions.
+    ///
+    /// The resulting ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the WithCondition() method for the Builder struct.
     ///
     /// # Example

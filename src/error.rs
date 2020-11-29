@@ -2,8 +2,9 @@
 
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ExpressionError {
-    /// Returned if invalid parameters are encountered. This
-    /// error specifically refers to situations where parameters are non-empty but
+    /// Returned if invalid parameters are encountered.
+    ///
+    /// This error specifically refers to situations where parameters are non-empty but
     /// have an invalid syntax/format. The error message includes the function
     /// that returned the error originally and the parameter type that was deemed
     /// invalid.
@@ -20,6 +21,7 @@ pub enum ExpressionError {
     InvalidParameterError(/*functionName*/ String, /*parameterType*/ String),
 
     /// Returned if parameters are empty and uninitialized.
+    ///
     /// This error is returned if opaque structs (ConditionBuilder, NameBuilder,
     /// Builder, etc) are initialized outside of functions in the package, since all
     /// structs in the package are designed to be initialized with functions.

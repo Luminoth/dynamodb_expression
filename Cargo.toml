@@ -15,10 +15,10 @@ name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.34"
-derivative = "2.1.1"
-rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
-thiserror = "1.0.22"
+anyhow = "1.0.38"
+derivative = "2.2.0"
+rusoto_dynamodb = { version = "0.46.0", default-features = false, optional = true }
+thiserror = "1.0.24"
 
 [features]
 default = ["rusoto_dynamodb", "rusoto_dynamodb/default"]

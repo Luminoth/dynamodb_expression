@@ -374,22 +374,22 @@ struct AliasList {
 }
 
 impl AliasList {
-    fn alias_value(&mut self, dav: AttributeValue) -> anyhow::Result<String> {
+    fn alias_value(&mut self, dav: AttributeValue) -> String {
         self.values.push(dav);
-        Ok(format!(":{}", self.values.len() - 1))
+        format!(":{}", self.values.len() - 1)
     }
 
-    fn alias_path(&mut self, nm: impl Into<String>) -> anyhow::Result<String> {
+    fn alias_path(&mut self, nm: impl Into<String>) -> String {
         let nm = nm.into();
 
         for (idx, name) in self.names.iter().enumerate() {
             if nm == *name {
-                return Ok(format!("#{}", idx));
+                return format!("#{}", idx);
             }
         }
 
         self.names.push(nm);
-        Ok(format!("#{}", self.names.len() - 1))
+        format!("#{}", self.names.len() - 1)
     }
 }
 
@@ -499,14 +499,14 @@ impl ExpressionNode {
         if index >= self.names.len() {
             bail!("substitutePath error: exprNode []names out of range");
         }
-        alias_list.alias_path(self.names[index].clone())
+        Ok(alias_list.alias_path(self.names[index].clone()))
     }
 
     fn substitute_value(&self, index: usize, alias_list: &mut AliasList) -> anyhow::Result<String> {
         if index >= self.values.len() {
             bail!("substituteValue error: exprNode []values out of range");
         }
-        alias_list.alias_value(self.values[index].clone())
+        Ok(alias_list.alias_value(self.values[index].clone()))
     }
 
     fn substitute_child(&self, index: usize, alias_list: &mut AliasList) -> anyhow::Result<String> {
@@ -1172,7 +1172,7 @@ mod tests {
         let mut input = expression::AliasList::default();
 
         assert_eq!(
-            input.alias_value(AttributeValue::default())?,
+            input.alias_value(AttributeValue::default()),
             ":0".to_owned()
         );
 
@@ -1192,7 +1192,7 @@ mod tests {
         };
 
         assert_eq!(
-            input.alias_value(AttributeValue::default())?,
+            input.alias_value(AttributeValue::default()),
             ":4".to_owned()
         );
 
@@ -1203,7 +1203,7 @@ mod tests {
     fn new_unique_item() -> anyhow::Result<()> {
         let mut input = expression::AliasList::default();
 
-        assert_eq!(input.alias_path("foo")?, "#0".to_owned());
+        assert_eq!(input.alias_path("foo"), "#0".to_owned());
 
         Ok(())
     }
@@ -1215,7 +1215,7 @@ mod tests {
             ..Default::default()
         };
 
-        assert_eq!(input.alias_path("foo")?, "#0".to_owned());
+        assert_eq!(input.alias_path("foo"), "#0".to_owned());
 
         Ok(())
     }

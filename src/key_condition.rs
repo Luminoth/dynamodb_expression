@@ -90,18 +90,18 @@ impl KeyConditionBuilder {
         Ok(node)
     }
 
-    fn between_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn between_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "$c BETWEEN $c AND $c".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn begins_with_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn begins_with_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "begins_with ($c, $c)".to_owned();
 
-        Ok(node)
+        node
     }
 }
 
@@ -119,9 +119,9 @@ impl TreeBuilder for KeyConditionBuilder {
                 KeyConditionBuilder::compare_build_key_condition(self.mode, ret)?,
             ),
             KeyConditionMode::And => Ok(KeyConditionBuilder::and_build_key_condition(self, ret)?),
-            KeyConditionMode::Between => Ok(KeyConditionBuilder::between_build_condition(ret)?),
+            KeyConditionMode::Between => Ok(KeyConditionBuilder::between_build_condition(ret)),
             KeyConditionMode::BeginsWith => {
-                Ok(KeyConditionBuilder::begins_with_build_condition(ret)?)
+                Ok(KeyConditionBuilder::begins_with_build_condition(ret))
             }
             KeyConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
                 "buildTree".to_owned(),

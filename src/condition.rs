@@ -276,67 +276,67 @@ impl ConditionBuilder {
         Ok(node)
     }
 
-    fn not_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn not_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // create a string with escaped characters to substitute them with proper
         // aliases during runtime
         node.fmt_expression = "NOT ($c)".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn between_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn between_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "$c BETWEEN $c AND $c".to_owned();
 
-        Ok(node)
+        node
     }
 
     fn in_build_condition(
         condition_builder: &ConditionBuilder,
         mut node: ExpressionNode,
-    ) -> anyhow::Result<ExpressionNode> {
+    ) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = format!(
             "$c IN ($c{})",
             ", $c".repeat(condition_builder.operand_list.len() - 2)
         );
 
-        Ok(node)
+        node
     }
 
-    fn attr_exists_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn attr_exists_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "attribute_exists ($c)".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn attr_not_exists_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn attr_not_exists_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "attribute_not_exists ($c)".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn attr_type_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn attr_type_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "attribute_type ($c, $c)".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn begins_with_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn begins_with_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "begins_with ($c, $c)".to_owned();
 
-        Ok(node)
+        node
     }
 
-    fn contains_build_condition(mut node: ExpressionNode) -> anyhow::Result<ExpressionNode> {
+    fn contains_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
         node.fmt_expression = "contains ($c, $c)".to_owned();
 
-        Ok(node)
+        node
     }
 }
 
@@ -357,16 +357,16 @@ impl TreeBuilder for ConditionBuilder {
             ConditionMode::And | ConditionMode::Or => {
                 Ok(ConditionBuilder::compound_build_condition(self, ret)?)
             }
-            ConditionMode::Not => Ok(ConditionBuilder::not_build_condition(ret)?),
-            ConditionMode::Between => Ok(ConditionBuilder::between_build_condition(ret)?),
-            ConditionMode::In => Ok(ConditionBuilder::in_build_condition(self, ret)?),
-            ConditionMode::AttrExists => Ok(ConditionBuilder::attr_exists_build_condition(ret)?),
+            ConditionMode::Not => Ok(ConditionBuilder::not_build_condition(ret)),
+            ConditionMode::Between => Ok(ConditionBuilder::between_build_condition(ret)),
+            ConditionMode::In => Ok(ConditionBuilder::in_build_condition(self, ret)),
+            ConditionMode::AttrExists => Ok(ConditionBuilder::attr_exists_build_condition(ret)),
             ConditionMode::AttrNotExists => {
-                Ok(ConditionBuilder::attr_not_exists_build_condition(ret)?)
+                Ok(ConditionBuilder::attr_not_exists_build_condition(ret))
             }
-            ConditionMode::AttrType => Ok(ConditionBuilder::attr_type_build_condition(ret)?),
-            ConditionMode::BeginsWith => Ok(ConditionBuilder::begins_with_build_condition(ret)?),
-            ConditionMode::Contains => Ok(ConditionBuilder::contains_build_condition(ret)?),
+            ConditionMode::AttrType => Ok(ConditionBuilder::attr_type_build_condition(ret)),
+            ConditionMode::BeginsWith => Ok(ConditionBuilder::begins_with_build_condition(ret)),
+            ConditionMode::Contains => Ok(ConditionBuilder::contains_build_condition(ret)),
             ConditionMode::Unset => bail!(ExpressionError::UnsetParameterError(
                 "buildTree".to_owned(),
                 "ConditionBuilder".to_owned(),
@@ -2883,7 +2883,7 @@ mod tests {
         };
 
         assert_eq!(
-            ConditionBuilder::in_build_condition(&input, ExpressionNode::default())?.fmt_expression,
+            ConditionBuilder::in_build_condition(&input, ExpressionNode::default()).fmt_expression,
             "$c IN ($c, $c, $c, $c, $c, $c)",
         );
 

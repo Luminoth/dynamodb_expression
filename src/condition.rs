@@ -73,7 +73,7 @@ enum ConditionMode {
 ///
 /// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Functions)
 #[derive(Copy, Clone, PartialEq, Debug)]
-pub enum DynamoDBAttributeType {
+pub enum DynamoDbAttributeType {
     /// String represents the DynamoDB String type
     String,
 
@@ -105,20 +105,20 @@ pub enum DynamoDBAttributeType {
     Map,
 }
 
-impl DynamoDBAttributeType {
-    /// Returns the string representation of the DynamoDBAttributeType
+impl DynamoDbAttributeType {
+    /// Returns the string representation of the DynamoDbAttributeType
     pub fn as_str(&self) -> &str {
         match self {
-            DynamoDBAttributeType::String => "S",
-            DynamoDBAttributeType::StringSet => "SS",
-            DynamoDBAttributeType::Number => "N",
-            DynamoDBAttributeType::NumberSet => "NS",
-            DynamoDBAttributeType::Binary => "B",
-            DynamoDBAttributeType::BinarySet => "BS",
-            DynamoDBAttributeType::Boolean => "BOOL",
-            DynamoDBAttributeType::Null => "NULL",
-            DynamoDBAttributeType::List => "L",
-            DynamoDBAttributeType::Map => "M",
+            DynamoDbAttributeType::String => "S",
+            DynamoDbAttributeType::StringSet => "SS",
+            DynamoDbAttributeType::Number => "N",
+            DynamoDbAttributeType::NumberSet => "NS",
+            DynamoDbAttributeType::Binary => "B",
+            DynamoDbAttributeType::BinarySet => "BS",
+            DynamoDbAttributeType::Boolean => "BOOL",
+            DynamoDbAttributeType::Null => "NULL",
+            DynamoDbAttributeType::List => "L",
+            DynamoDbAttributeType::Map => "M",
         }
     }
 }
@@ -775,7 +775,7 @@ pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
 /// Returns a ConditionBuilder representing the result of the
 /// attribute_type function in DynamoDB Condition Expressions.
 ///
-/// The DynamoDB types are represented by the type DynamoDBAttributeType. The resulting
+/// The DynamoDB types are represented by the type DynamoDbAttributeType. The resulting
 /// ConditionBuilder can be used as a part of other Condition Expressions or as
 /// an argument to the with_condition() method for the Builder struct.
 ///
@@ -786,7 +786,7 @@ pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
 ///
 /// // condition represents the boolean condition of whether the item
 /// // attribute "Age" has the DynamoDB type Number or not
-/// let condition = attribute_type(name("Age"), DynamoDBAttributeType::Number);
+/// let condition = attribute_type(name("Age"), DynamoDbAttributeType::Number);
 ///
 /// // Used in another Condition Expression
 /// let another_condition = not(condition);
@@ -795,7 +795,7 @@ pub fn attribute_not_exists(name: Box<NameBuilder>) -> ConditionBuilder {
 /// ```
 pub fn attribute_type(
     name: Box<NameBuilder>,
-    attr_type: DynamoDBAttributeType,
+    attr_type: DynamoDbAttributeType,
 ) -> ConditionBuilder {
     let v = value(attr_type.as_str().to_owned());
     ConditionBuilder {
@@ -1397,7 +1397,7 @@ impl NameBuilder {
     /// Returns a ConditionBuilder representing the result of the
     /// attribute_type function in DynamoDB Condition Expressions.
     ///
-    /// The DynamoDB types are represented by the type DynamoDBAttributeType. The resulting
+    /// The DynamoDB types are represented by the type DynamoDbAttributeType. The resulting
     /// ConditionBuilder can be used as a part of other Condition Expressions or as
     /// an argument to the with_condition() method for the Builder struct.
     ///
@@ -1408,7 +1408,7 @@ impl NameBuilder {
     ///
     /// // condition represents the boolean condition of whether the item
     /// // attribute "Age" has the DynamoDB type Number or not
-    /// let condition = name("Age").attribute_type(DynamoDBAttributeType::Number);
+    /// let condition = name("Age").attribute_type(DynamoDbAttributeType::Number);
     ///
     /// // Used in another Condition Expression
     /// let another_condition = not(condition);
@@ -1417,7 +1417,7 @@ impl NameBuilder {
     /// ```
     pub fn attribute_type(
         self: Box<NameBuilder>,
-        attr_type: DynamoDBAttributeType,
+        attr_type: DynamoDbAttributeType,
     ) -> ConditionBuilder {
         attribute_type(self, attr_type)
     }
@@ -2527,7 +2527,7 @@ mod tests {
 
     #[test]
     fn attr_type_string() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::String);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::String);
 
         assert_eq!(
             input.build_tree()?,
@@ -2551,7 +2551,7 @@ mod tests {
 
     #[test]
     fn attr_type_stringset() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::StringSet);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::StringSet);
 
         assert_eq!(
             input.build_tree()?,
@@ -2575,7 +2575,7 @@ mod tests {
 
     #[test]
     fn attr_type_number() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::Number);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::Number);
 
         assert_eq!(
             input.build_tree()?,
@@ -2599,7 +2599,7 @@ mod tests {
 
     #[test]
     fn attr_type_binaryset() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::BinarySet);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::BinarySet);
 
         assert_eq!(
             input.build_tree()?,
@@ -2623,7 +2623,7 @@ mod tests {
 
     #[test]
     fn attr_type_boolean() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::Boolean);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::Boolean);
 
         assert_eq!(
             input.build_tree()?,
@@ -2647,7 +2647,7 @@ mod tests {
 
     #[test]
     fn attr_type_null() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::Null);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::Null);
 
         assert_eq!(
             input.build_tree()?,
@@ -2671,7 +2671,7 @@ mod tests {
 
     #[test]
     fn attr_type_list() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::List);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::List);
 
         assert_eq!(
             input.build_tree()?,
@@ -2695,7 +2695,7 @@ mod tests {
 
     #[test]
     fn attr_type_map() -> anyhow::Result<()> {
-        let input = name("foo").attribute_type(DynamoDBAttributeType::Map);
+        let input = name("foo").attribute_type(DynamoDbAttributeType::Map);
 
         assert_eq!(
             input.build_tree()?,
@@ -2719,7 +2719,7 @@ mod tests {
 
     #[test]
     fn attr_type_invalid_operand() -> anyhow::Result<()> {
-        let input = name("").attribute_type(DynamoDBAttributeType::Map);
+        let input = name("").attribute_type(DynamoDbAttributeType::Map);
 
         assert_eq!(
             input

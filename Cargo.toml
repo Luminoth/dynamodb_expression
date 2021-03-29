@@ -15,7 +15,7 @@ name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.40"
 derivative = "2.2.0"
 rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
 thiserror = "1.0.24"

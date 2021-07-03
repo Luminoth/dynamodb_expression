@@ -66,6 +66,7 @@ impl Builder {
     /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
     /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
     /// ```
+    // TODO: this doesn't need to exist
     pub fn new() -> Self {
         Self {
             expressions: HashMap::new(),
@@ -334,10 +335,68 @@ impl Expression {
         }
     }
 
+    /// Returns the string corresponding to the Condition Expression
+    /// of the argument Expression.
+    ///
+    /// This method is used to satisfy the members of
+    /// DynamoDB input structs. If the Expression does not have a condition
+    /// expression this method returns None.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    /// use dynamodb_expression::*;
+    ///
+    /// let cond = name("someKey").equal(value("someValue"));
+    /// let builder = Builder::new().with_condition(cond);
+    /// let expression = builder.build().unwrap();
+    ///
+    /// let mut key = HashMap::new();
+    /// key.insert("PartitionKey".to_owned(), rusoto_dynamodb::AttributeValue{
+    ///   s: Some("SomeKey".to_owned()),
+    ///   ..Default::default()
+    /// });
+    ///
+    /// let delete_input = rusoto_dynamodb::DeleteItemInput{
+    ///   condition_expression: expression.condition().cloned(),
+    ///   expression_attribute_names: expression.names().clone(),
+    ///   expression_attribute_values: expression.values().clone(),
+    ///   key,
+    ///   table_name: "SomeTable".to_owned(),
+    ///   ..Default::default()
+    /// };
+    /// ```
     pub fn condition(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Condition)
     }
 
+    /// Returns the string corresponding to the Filter Expression of the
+    /// argument Expression.
+    ///
+    /// This method is used to satisfy the members of DynamoDB
+    /// input structs. If the Expression does not have a filter expression this
+    /// method returns nil.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// let filter = name("someField").equal(value("someValue"));
+    /// let builder = Builder::new().with_key_condition(key_cond).with_filter(filter);
+    /// let expression = builder.build().unwrap();
+    ///
+    /// let query_input = rusoto_dynamodb::QueryInput{
+    ///   key_condition_expression: expression.key_condition().cloned(),
+    ///   filter_expression: expression.filter().cloned(),
+    ///   expression_attribute_names: expression.names().clone(),
+    ///   expression_attribute_values: expression.values().clone(),
+    ///   table_name: "SomeTable".to_owned(),
+    ///   ..Default::default()
+    /// };
+    /// ```
     pub fn filter(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Filter)
     }

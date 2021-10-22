@@ -5,7 +5,7 @@ authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/Luminoth/dynamodb_expression"
-edition = "2018"
+edition = "2021"
 keywords = ["dynamodb"]
 
 description = "Port of Go DynamoDB Expressions to Rust"

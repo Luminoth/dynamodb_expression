@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
-use rusoto_dynamodb::AttributeValue;
+use aws_sdk_dynamodb::model::AttributeValue;
 
 use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
 
@@ -29,20 +29,23 @@ pub(crate) enum ExpressionType {
 /// ```
 /// use dynamodb_expression::*;
 ///
+/// # tokio_test::block_on(async {
+/// let shared_config = aws_config::from_env().load().await;
+/// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+///
 /// let key_cond = key("someKey").equal(value("someValue"));
 /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
 ///
 /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
 /// let expr = builder.build().unwrap();
 ///
-/// let query_input = rusoto_dynamodb::QueryInput{
-///   key_condition_expression: expr.key_condition().cloned(),
-///   projection_expression: expr.projection().cloned(),
-///   expression_attribute_names: expr.names().clone(),
-///   expression_attribute_values: expr.values().clone(),
-///   table_name: "SomeTable".to_owned(),
-///   ..Default::default()
-/// };
+/// let query = client.query()
+///     .key_condition_expression(expr.key_condition().cloned().unwrap())
+///     .projection_expression(expr.projection().cloned().unwrap())
+///     .set_expression_attribute_names(expr.names().clone())
+///     .set_expression_attribute_values(expr.values().clone())
+///     .table_name("SomeTable".to_owned());
+/// # })
 /// ```
 #[derive(Default)]
 pub struct Builder {
@@ -228,6 +231,10 @@ impl Builder {
     /// ```
     /// use dynamodb_expression::*;
     ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
     /// // key_cond represents the Key Condition Expression
     /// let key_cond = key("someKey").equal(value("someValue"));
     /// // proj represents the Projection Expression
@@ -238,14 +245,14 @@ impl Builder {
     /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
     /// let expr = builder.build().unwrap();
     ///
-    /// let query_nput = rusoto_dynamodb::QueryInput{
-    ///   key_condition_expression: expr.key_condition().cloned(),
-    ///   projection_expression: expr.projection().cloned(),
-    ///   expression_attribute_names: expr.names().clone(),
-    ///   expression_attribute_values: expr.values().clone(),
-    ///   table_name: "SomeTable".to_owned(),
-    ///   ..Default::default()
-    /// };
+    /// let query = client.query()
+    ///     .key_condition_expression(expr.key_condition().cloned().unwrap())
+    ///     .projection_expression(expr.projection().cloned().unwrap())
+    ///     .set_expression_attribute_names(expr.names().clone())
+    ///     .set_expression_attribute_values(expr.values().clone())
+    ///     .table_name("SomeTable".to_owned());
+    ///
+    /// # })
     /// ```
     pub fn build(self) -> anyhow::Result<Expression> {
         let (alias_list, expressions) = self.build_child_trees()?;
@@ -301,6 +308,10 @@ impl Builder {
 /// ```
 /// use dynamodb_expression::*;
 ///
+/// # tokio_test::block_on(async {
+/// let shared_config = aws_config::from_env().load().await;
+/// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+///
 /// // key_cond represents the Key Condition Expression
 /// let key_cond = key("someKey").equal(value("someValue"));
 /// // proj represents the Projection Expression
@@ -311,14 +322,13 @@ impl Builder {
 /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
 /// let expr = builder.build().unwrap();
 ///
-/// let query_input = rusoto_dynamodb::QueryInput{
-///   key_condition_expression: expr.key_condition().cloned(),
-///   projection_expression: expr.projection().cloned(),
-///   expression_attribute_names: expr.names().clone(),
-///   expression_attribute_values: expr.values().clone(),
-///   table_name: "SomeTable".to_owned(),
-///   ..Default::default()
-/// };
+/// let query = client.query()
+///     .key_condition_expression(expr.key_condition().cloned().unwrap())
+///     .projection_expression(expr.projection().cloned().unwrap())
+///     .set_expression_attribute_names(expr.names().clone())
+///     .set_expression_attribute_values(expr.values().clone())
+///     .table_name("SomeTable".to_owned());
+/// # })
 /// ```
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Expression {
@@ -348,24 +358,21 @@ impl Expression {
     /// use std::collections::HashMap;
     /// use dynamodb_expression::*;
     ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
     /// let cond = name("someKey").equal(value("someValue"));
     /// let builder = Builder::new().with_condition(cond);
     /// let expression = builder.build().unwrap();
     ///
-    /// let mut key = HashMap::new();
-    /// key.insert("PartitionKey".to_owned(), rusoto_dynamodb::AttributeValue{
-    ///   s: Some("SomeKey".to_owned()),
-    ///   ..Default::default()
-    /// });
-    ///
-    /// let delete_input = rusoto_dynamodb::DeleteItemInput{
-    ///   condition_expression: expression.condition().cloned(),
-    ///   expression_attribute_names: expression.names().clone(),
-    ///   expression_attribute_values: expression.values().clone(),
-    ///   key,
-    ///   table_name: "SomeTable".to_owned(),
-    ///   ..Default::default()
-    /// };
+    /// let delete = client.delete_item()
+    ///     .condition_expression(expression.condition().cloned().unwrap())
+    ///     .set_expression_attribute_names(expression.names().clone())
+    ///     .set_expression_attribute_values(expression.values().clone())
+    ///     .key("PartitionKey".to_owned(), aws_sdk_dynamodb::model::AttributeValue::S("SomeKey".to_owned()))
+    ///     .table_name("SomeTable".to_owned());
+    /// # })
     /// ```
     pub fn condition(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Condition)
@@ -383,19 +390,22 @@ impl Expression {
     /// ```
     /// use dynamodb_expression::*;
     ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
     /// let key_cond = key("someKey").equal(value("someValue"));
     /// let filter = name("someField").equal(value("someValue"));
     /// let builder = Builder::new().with_key_condition(key_cond).with_filter(filter);
     /// let expression = builder.build().unwrap();
     ///
-    /// let query_input = rusoto_dynamodb::QueryInput{
-    ///   key_condition_expression: expression.key_condition().cloned(),
-    ///   filter_expression: expression.filter().cloned(),
-    ///   expression_attribute_names: expression.names().clone(),
-    ///   expression_attribute_values: expression.values().clone(),
-    ///   table_name: "SomeTable".to_owned(),
-    ///   ..Default::default()
-    /// };
+    /// let query = client.query()
+    ///     .key_condition_expression(expression.key_condition().cloned().unwrap())
+    ///     .filter_expression(expression.filter().cloned().unwrap())
+    ///     .set_expression_attribute_names(expression.names().clone())
+    ///     .set_expression_attribute_values(expression.values().clone())
+    ///     .table_name("SomeTable".to_owned());
+    /// # })
     /// ```
     pub fn filter(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Filter)
@@ -578,7 +588,7 @@ impl ExpressionNode {
 
 #[cfg(test)]
 mod tests {
-    use rusoto_dynamodb::AttributeValue;
+    use aws_sdk_dynamodb::model::AttributeValue;
 
     use crate::*;
 
@@ -604,10 +614,7 @@ mod tests {
             Expression {
                 expressions: hashmap!(ExpressionType::Condition => "#0 = :0".to_owned()),
                 names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
-                values: Some(hashmap!(":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                })),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue::N("5".to_owned()))),
             },
         );
 
@@ -642,10 +649,7 @@ mod tests {
             Expression {
                 expressions: hashmap!(ExpressionType::KeyCondition => "#0 = :0".to_owned()),
                 names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
-                values: Some(hashmap!(":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                })),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue::N("5".to_owned()))),
             },
         );
 
@@ -661,10 +665,7 @@ mod tests {
             Expression {
                 expressions: hashmap!(ExpressionType::Filter => "#0 = :0".to_owned()),
                 names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
-                values: Some(hashmap!(":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                })),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue::N("5".to_owned()))),
             },
         );
 
@@ -680,10 +681,7 @@ mod tests {
             Expression {
                 expressions: hashmap!(ExpressionType::Update => "SET #0 = :0\n".to_owned()),
                 names: Some(hashmap!("#0".to_owned() => "foo".to_owned())),
-                values: Some(hashmap!(":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                })),
+                values: Some(hashmap!(":0".to_owned() => AttributeValue::N("5".to_owned()))),
             },
         );
 
@@ -718,22 +716,10 @@ mod tests {
                 "#2".to_owned() => "baz".to_owned()
                 )),
                 values: Some(hashmap!(
-                    ":0".to_owned() => AttributeValue{
-                        n: Some("5".to_owned()),
-                        ..Default::default()
-                    },
-                    ":1".to_owned() => AttributeValue{
-                        n: Some("5".to_owned()),
-                        ..Default::default()
-                    },
-                    ":2".to_owned() => AttributeValue{
-                        n: Some("6".to_owned()),
-                        ..Default::default()
-                    },
-                    ":3".to_owned() => AttributeValue{
-                        n: Some("5".to_owned()),
-                        ..Default::default()
-                    }
+                    ":0".to_owned() => AttributeValue::N("5".to_owned()),
+                    ":1".to_owned() => AttributeValue::N("5".to_owned()),
+                    ":2".to_owned() => AttributeValue::N("6".to_owned()),
+                    ":3".to_owned() => AttributeValue::N("5".to_owned())
                 )),
             },
         );
@@ -937,10 +923,7 @@ mod tests {
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue{
-                    null: Some(true),
-                    ..Default::default()
-                }
+                ":0".to_owned() => AttributeValue::Null(true)
             ))
         );
 
@@ -955,10 +938,7 @@ mod tests {
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue{
-                    null: Some(true),
-                    ..Default::default()
-                }
+                ":0".to_owned() => AttributeValue::Null(true)
             ))
         );
 
@@ -967,18 +947,13 @@ mod tests {
 
     #[test]
     fn attribute_value_used_directly() -> anyhow::Result<()> {
-        let input = Builder::new().with_condition(name("key").equal(value(AttributeValue {
-            s: Some("value".to_owned()),
-            ..Default::default()
-        })));
+        let input = Builder::new()
+            .with_condition(name("key").equal(value(AttributeValue::S("value".to_owned()))));
 
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue{
-                    s: Some("value".to_owned()),
-                    ..Default::default()
-                }
+                ":0".to_owned() => AttributeValue::S("value".to_owned())
             ))
         );
 
@@ -992,10 +967,7 @@ mod tests {
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                }
+                ":0".to_owned() => AttributeValue::N("5".to_owned())
             ))
         );
 
@@ -1012,14 +984,8 @@ mod tests {
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue{
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                },
-                ":1".to_owned() => AttributeValue{
-                    n: Some("6".to_owned()),
-                    ..Default::default()
-                }
+                ":0".to_owned() => AttributeValue::N("5".to_owned()),
+                ":1".to_owned() => AttributeValue::N("6".to_owned())
             ))
         );
 
@@ -1049,13 +1015,8 @@ mod tests {
 
     #[test]
     fn basic_values() -> anyhow::Result<()> {
-        let input = ExpressionNode::from_values(
-            vec![AttributeValue {
-                n: Some("5".to_owned()),
-                ..Default::default()
-            }],
-            "$v".to_owned(),
-        );
+        let input =
+            ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v".to_owned());
 
         assert_eq!(
             input.build_expression_string(&mut expression::AliasList::default())?,
@@ -1109,13 +1070,7 @@ mod tests {
         let node = ExpressionNode::from_children_expression(
             vec![
                 ExpressionNode::from_names(vec!["foo".to_string()], "$n"),
-                ExpressionNode::from_values(
-                    vec![AttributeValue {
-                        n: Some("5".to_owned()),
-                        ..Default::default()
-                    }],
-                    "$v",
-                ),
+                ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
             ],
             "$c = $c",
         );
@@ -1231,7 +1186,7 @@ mod tests {
         let mut input = expression::AliasList::default();
 
         assert_eq!(
-            input.alias_value(AttributeValue::default()),
+            input.alias_value(AttributeValue::Null(false)),
             ":0".to_owned()
         );
 
@@ -1242,16 +1197,16 @@ mod tests {
     fn fifth_item() -> anyhow::Result<()> {
         let mut input = expression::AliasList {
             values: vec![
-                AttributeValue::default(),
-                AttributeValue::default(),
-                AttributeValue::default(),
-                AttributeValue::default(),
+                AttributeValue::Null(false),
+                AttributeValue::Null(false),
+                AttributeValue::Null(false),
+                AttributeValue::Null(false),
             ],
             ..Default::default()
         };
 
         assert_eq!(
-            input.alias_value(AttributeValue::default()),
+            input.alias_value(AttributeValue::Null(false)),
             ":4".to_owned()
         );
 

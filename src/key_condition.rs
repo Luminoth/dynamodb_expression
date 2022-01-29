@@ -283,7 +283,7 @@ impl KeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use rusoto_dynamodb::AttributeValue;
+    use aws_sdk_dynamodb::model::AttributeValue;
 
     use crate::*;
 
@@ -296,13 +296,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
                 ],
                 "$c = $c"
             )
@@ -320,13 +314,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
                 ],
                 "$c < $c"
             )
@@ -344,13 +332,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
                 ],
                 "$c <= $c"
             )
@@ -368,13 +350,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
                 ],
                 "$c > $c"
             )
@@ -392,13 +368,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
                 ],
                 "$c >= $c"
             )
@@ -434,20 +404,8 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("5".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            n: Some("10".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
+                    ExpressionNode::from_values(vec![AttributeValue::N("10".to_owned())], "$v"),
                 ],
                 "$c BETWEEN $c AND $c"
             )
@@ -465,13 +423,7 @@ mod tests {
             ExpressionNode::from_children_expression(
                 vec![
                     ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
-                    ExpressionNode::from_values(
-                        vec![AttributeValue {
-                            s: Some("bar".to_owned()),
-                            ..Default::default()
-                        }],
-                        "$v"
-                    ),
+                    ExpressionNode::from_values(vec![AttributeValue::S("bar".to_owned())], "$v"),
                 ],
                 "begins_with ($c, $c)"
             )
@@ -494,10 +446,7 @@ mod tests {
                         vec![
                             ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
                             ExpressionNode::from_values(
-                                vec![AttributeValue {
-                                    n: Some("5".to_owned()),
-                                    ..Default::default()
-                                }],
+                                vec![AttributeValue::N("5".to_owned())],
                                 "$v"
                             )
                         ],
@@ -507,10 +456,7 @@ mod tests {
                         vec![
                             ExpressionNode::from_names(vec!["bar".to_owned()], "$n"),
                             ExpressionNode::from_values(
-                                vec![AttributeValue {
-                                    s: Some("baz".to_owned()),
-                                    ..Default::default()
-                                }],
+                                vec![AttributeValue::S("baz".to_owned())],
                                 "$v"
                             ),
                         ],
@@ -585,10 +531,7 @@ mod tests {
                     vec![
                         ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
                         ExpressionNode::from_values(
-                            vec![AttributeValue {
-                                s: Some("bar".to_owned()),
-                                ..Default::default()
-                            }],
+                            vec![AttributeValue::S("bar".to_owned())],
                             "$v"
                         )
                     ],
@@ -597,13 +540,7 @@ mod tests {
                 ExpressionNode::from_children_expression(
                     vec![
                         ExpressionNode::from_names(vec!["baz".to_owned()], "$n"),
-                        ExpressionNode::from_values(
-                            vec![AttributeValue {
-                                n: Some("10".to_owned()),
-                                ..Default::default()
-                            }],
-                            "$v"
-                        )
+                        ExpressionNode::from_values(vec![AttributeValue::N("10".to_owned())], "$v")
                     ],
                     "$c < $c"
                 ),

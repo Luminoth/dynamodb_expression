@@ -17,9 +17,9 @@ path = "src/lib.rs"
 [dependencies]
 anyhow = "1.0.40"
 derivative = "2.2.0"
-rusoto_dynamodb = { version = "0.45.0", default-features = false, optional = true }
+aws-sdk-dynamodb = "0.6.0"
 thiserror = "1.0.24"
 
-[features]
-default = ["rusoto_dynamodb", "rusoto_dynamodb/default"]
-rustls = ["rusoto_dynamodb", "rusoto_dynamodb/rustls"]
+[dev-dependencies]
+aws-config = "0.6.0"
+tokio-test = "0.4.2"

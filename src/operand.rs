@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
+use aws_sdk_dynamodb::model::AttributeValue;
 use derivative::*;
-use rusoto_dynamodb::AttributeValue;
 
 use crate::{error::ExpressionError, ExpressionNode};
 
@@ -47,10 +47,7 @@ impl<T> ValueBuilder<T> {}
 
 impl ValueBuilderImpl for ValueBuilder<bool> {
     fn attribute_value(&self) -> AttributeValue {
-        AttributeValue {
-            bool: Some(self.value),
-            ..Default::default()
-        }
+        AttributeValue::Bool(self.value)
     }
 
     into_operand_builder!();
@@ -58,10 +55,7 @@ impl ValueBuilderImpl for ValueBuilder<bool> {
 
 impl ValueBuilderImpl for ValueBuilder<i64> {
     fn attribute_value(&self) -> AttributeValue {
-        AttributeValue {
-            n: Some(self.value.to_string()),
-            ..Default::default()
-        }
+        AttributeValue::N(self.value.to_string())
     }
 
     into_operand_builder!();
@@ -69,10 +63,7 @@ impl ValueBuilderImpl for ValueBuilder<i64> {
 
 impl ValueBuilderImpl for ValueBuilder<f64> {
     fn attribute_value(&self) -> AttributeValue {
-        AttributeValue {
-            n: Some(self.value.to_string()),
-            ..Default::default()
-        }
+        AttributeValue::N(self.value.to_string())
     }
 
     into_operand_builder!();
@@ -80,10 +71,7 @@ impl ValueBuilderImpl for ValueBuilder<f64> {
 
 impl ValueBuilderImpl for ValueBuilder<&'static str> {
     fn attribute_value(&self) -> AttributeValue {
-        AttributeValue {
-            s: Some(self.value.to_owned()),
-            ..Default::default()
-        }
+        AttributeValue::S(self.value.to_owned())
     }
 
     into_operand_builder!();
@@ -92,16 +80,10 @@ impl ValueBuilderImpl for ValueBuilder<&'static str> {
 impl ValueBuilderImpl for ValueBuilder<Vec<&'static str>> {
     fn attribute_value(&self) -> AttributeValue {
         if self.value.is_empty() {
-            return AttributeValue {
-                null: Some(true),
-                ..Default::default()
-            };
+            return AttributeValue::Null(true);
         }
 
-        AttributeValue {
-            ss: Some(self.value.iter().map(|&x| x.to_owned()).collect()),
-            ..Default::default()
-        }
+        AttributeValue::Ss(self.value.iter().map(|&x| x.to_owned()).collect())
     }
 
     into_operand_builder!();
@@ -109,10 +91,7 @@ impl ValueBuilderImpl for ValueBuilder<Vec<&'static str>> {
 
 impl ValueBuilderImpl for ValueBuilder<String> {
     fn attribute_value(&self) -> AttributeValue {
-        AttributeValue {
-            s: Some(self.value.clone()),
-            ..Default::default()
-        }
+        AttributeValue::S(self.value.clone())
     }
 
     into_operand_builder!();
@@ -121,16 +100,10 @@ impl ValueBuilderImpl for ValueBuilder<String> {
 impl ValueBuilderImpl for ValueBuilder<Vec<String>> {
     fn attribute_value(&self) -> AttributeValue {
         if self.value.is_empty() {
-            return AttributeValue {
-                null: Some(true),
-                ..Default::default()
-            };
+            return AttributeValue::Null(true);
         }
 
-        AttributeValue {
-            ss: Some(self.value.clone()),
-            ..Default::default()
-        }
+        AttributeValue::Ss(self.value.clone())
     }
 
     into_operand_builder!();
@@ -147,18 +120,12 @@ impl ValueBuilderImpl for ValueBuilder<AttributeValue> {
 impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
     fn attribute_value(&self) -> AttributeValue {
         if self.value.is_empty() {
-            return AttributeValue {
-                null: Some(true),
-                ..Default::default()
-            };
+            return AttributeValue::Null(true);
         }
 
         let value = self.value.iter().map(|x| x.attribute_value()).collect();
 
-        AttributeValue {
-            l: Some(value),
-            ..Default::default()
-        }
+        AttributeValue::L(value)
     }
 
     into_operand_builder!();
@@ -167,10 +134,7 @@ impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
 impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
     fn attribute_value(&self) -> AttributeValue {
         if self.value.is_empty() {
-            return AttributeValue {
-                null: Some(true),
-                ..Default::default()
-            };
+            return AttributeValue::Null(true);
         }
 
         let value = self
@@ -179,10 +143,7 @@ impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>
             .map(|(k, v)| (k.clone(), v.attribute_value()))
             .collect();
 
-        AttributeValue {
-            m: Some(value),
-            ..Default::default()
-        }
+        AttributeValue::M(value)
     }
 
     into_operand_builder!();
@@ -432,7 +393,7 @@ pub trait ListAppendBuilder: OperandBuilder {
 
 #[cfg(test)]
 mod tests {
-    use rusoto_dynamodb::AttributeValue;
+    use aws_sdk_dynamodb::model::AttributeValue;
 
     use crate::*;
 
@@ -466,13 +427,7 @@ mod tests {
 
         assert_eq!(
             input.build_operand()?.expression_node,
-            ExpressionNode::from_values(
-                vec![AttributeValue {
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                }],
-                "$v"
-            ),
+            ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
         );
 
         Ok(())
@@ -480,20 +435,11 @@ mod tests {
 
     #[test]
     fn attribute_value_as_value() -> anyhow::Result<()> {
-        let input = value(AttributeValue {
-            n: Some("5".to_owned()),
-            ..Default::default()
-        });
+        let input = value(AttributeValue::N("5".to_owned()));
 
         assert_eq!(
             input.build_operand()?.expression_node,
-            ExpressionNode::from_values(
-                vec![AttributeValue {
-                    n: Some("5".to_owned()),
-                    ..Default::default()
-                }],
-                "$v"
-            ),
+            ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v"),
         );
 
         Ok(())

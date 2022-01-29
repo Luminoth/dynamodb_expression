@@ -31,18 +31,21 @@
 //! ```
 //! use dynamodb_expression::*;
 //!
+//! # tokio_test::block_on(async {
+//! let shared_config = aws_config::from_env().load().await;
+//! let client = aws_sdk_dynamodb::Client::new(&shared_config);
+//!
 //! let filt = name("Artist").equal(value("No One You Know"));
 //! let proj = names_list(name("SongTitle"), vec![name("AlbumTitle")]);
 //! let expr = Builder::new().with_filter(filt).with_projection(proj).build().unwrap();
-
-//! let input = rusoto_dynamodb::ScanInput{
-//!   expression_attribute_names: expr.names().clone(),
-//!   expression_attribute_values: expr.values().clone(),
-//!   filter_expression: expr.filter().cloned(),
-//!   projection_expression: expr.projection().cloned(),
-//!   table_name: "Music".to_owned(),
-//!   ..Default::default()
-//! };
+//!
+//! let scan = client.query()
+//!     .set_expression_attribute_names(expr.names().clone())
+//!     .set_expression_attribute_values(expr.values().clone())
+//!     .filter_expression(expr.filter().cloned().unwrap())
+//!     .projection_expression(expr.projection().cloned().unwrap())
+//!     .table_name("Music".to_owned());
+//! # })
 //! ```
 //!
 //! The expression_attribute_names and expression_attribute_values member of the input
@@ -103,6 +106,6 @@ impl_value_builder!(&'static str);
 impl_value_builder!(Vec<&'static str>);
 impl_value_builder!(String);
 impl_value_builder!(Vec<String>);
-impl_value_builder!(rusoto_dynamodb::AttributeValue);
+impl_value_builder!(aws_sdk_dynamodb::model::AttributeValue);
 impl_value_builder!(Vec<Box<dyn ValueBuilderImpl>>);
 impl_value_builder!(std::collections::HashMap<String, Box<dyn ValueBuilderImpl>>);

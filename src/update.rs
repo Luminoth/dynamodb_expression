@@ -1,9 +1,10 @@
 //! Ported from [update.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go)
 
+use std::collections::HashMap;
+use std::fmt::Write;
+
 use anyhow::bail;
 use derivative::*;
-
-use std::collections::HashMap;
 
 use crate::{
     error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder,
@@ -205,8 +206,7 @@ impl TreeBuilder for UpdateBuilder {
         modes.sort_unstable_by(|x, y| x.as_ref().partial_cmp(y.as_ref()).unwrap());
 
         for key in modes {
-            ret.fmt_expression
-                .push_str(&format!("{} $c\n", key.as_ref()));
+            writeln!(ret.fmt_expression, "{} $c", key.as_ref())?;
 
             let child_node =
                 OperationBuilder::build_child_nodes(self.operations.get(key).unwrap())?;

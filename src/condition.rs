@@ -10,7 +10,7 @@ use crate::{
 
 /// Specifies the types of the struct conditionBuilder,
 /// representing the different types of Conditions (i.e. And, Or, Between, ...)
-#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Derivative)]
 #[derivative(Default)]
 enum ConditionMode {
     /// Unset catches errors for unset ConditionBuilder structs
@@ -72,7 +72,7 @@ enum ConditionMode {
 /// the DynamoDB type that is being checked and ensure compile time checks.
 ///
 /// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Functions)
-#[derive(Copy, Clone, PartialEq, Debug, strum_macros::AsRefStr)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, strum_macros::AsRefStr)]
 pub enum DynamoDbAttributeType {
     /// String represents the DynamoDB String type
     #[strum(serialize = "S")]

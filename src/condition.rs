@@ -72,55 +72,47 @@ enum ConditionMode {
 /// the DynamoDB type that is being checked and ensure compile time checks.
 ///
 /// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Functions)
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, strum_macros::AsRefStr)]
 pub enum DynamoDbAttributeType {
     /// String represents the DynamoDB String type
+    #[strum(serialize = "S")]
     String,
 
     /// StringSet represents the DynamoDB String Set type
+    #[strum(serialize = "SS")]
     StringSet,
 
     /// Number represents the DynamoDB Number type
+    #[strum(serialize = "N")]
     Number,
 
     /// NumberSet represents the DynamoDB Number Set type
+    #[strum(serialize = "NS")]
     NumberSet,
 
     /// Binary represents the DynamoDB Binary type
+    #[strum(serialize = "B")]
     Binary,
 
     /// BinarySet represents the DynamoDB Binary Set type
+    #[strum(serialize = "BS")]
     BinarySet,
 
     /// Boolean represents the DynamoDB Boolean type
+    #[strum(serialize = "BOOL")]
     Boolean,
 
     /// Null represents the DynamoDB Null type
+    #[strum(serialize = "NULL")]
     Null,
 
     /// List represents the DynamoDB List type
+    #[strum(serialize = "L")]
     List,
 
     /// Map represents the DynamoDB Map type
+    #[strum(serialize = "M")]
     Map,
-}
-
-impl DynamoDbAttributeType {
-    /// Returns the string representation of the DynamoDbAttributeType
-    pub fn as_str(&self) -> &str {
-        match self {
-            DynamoDbAttributeType::String => "S",
-            DynamoDbAttributeType::StringSet => "SS",
-            DynamoDbAttributeType::Number => "N",
-            DynamoDbAttributeType::NumberSet => "NS",
-            DynamoDbAttributeType::Binary => "B",
-            DynamoDbAttributeType::BinarySet => "BS",
-            DynamoDbAttributeType::Boolean => "BOOL",
-            DynamoDbAttributeType::Null => "NULL",
-            DynamoDbAttributeType::List => "L",
-            DynamoDbAttributeType::Map => "M",
-        }
-    }
 }
 
 /// Represents Condition Expressions and Filter Expressions in DynamoDB.
@@ -797,7 +789,7 @@ pub fn attribute_type(
     name: Box<NameBuilder>,
     attr_type: DynamoDbAttributeType,
 ) -> ConditionBuilder {
-    let v = value(attr_type.as_str().to_owned());
+    let v = value(attr_type.as_ref().to_owned());
     ConditionBuilder {
         operand_list: vec![name, v],
         condition_list: Vec::new(),

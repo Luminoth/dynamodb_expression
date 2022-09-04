@@ -10,25 +10,23 @@ use crate::{
     ValueBuilderImpl,
 };
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative)]
+#[derive(
+    Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative, strum_macros::AsRefStr,
+)]
 #[derivative(Default)]
 pub(crate) enum OperationMode {
     #[derivative(Default)]
+    #[strum(serialize = "SET")]
     Set,
-    Remove,
-    Add,
-    Delete,
-}
 
-impl OperationMode {
-    pub fn as_str(&self) -> &str {
-        match self {
-            OperationMode::Set => "SET",
-            OperationMode::Remove => "REMOVE",
-            OperationMode::Add => "ADD",
-            OperationMode::Delete => "DELETE",
-        }
-    }
+    #[strum(serialize = "REMOVE")]
+    Remove,
+
+    #[strum(serialize = "ADD")]
+    Add,
+
+    #[strum(serialize = "DELETE")]
+    Delete,
 }
 
 #[derive(Default)]
@@ -204,11 +202,11 @@ impl TreeBuilder for UpdateBuilder {
         for mode in self.operations.keys() {
             modes.push(mode);
         }
-        modes.sort_unstable_by(|x, y| x.as_str().partial_cmp(y.as_str()).unwrap());
+        modes.sort_unstable_by(|x, y| x.as_ref().partial_cmp(y.as_ref()).unwrap());
 
         for key in modes {
             ret.fmt_expression
-                .push_str(&format!("{} $c\n", key.as_str()));
+                .push_str(&format!("{} $c\n", key.as_ref()));
 
             let child_node =
                 OperationBuilder::build_child_nodes(self.operations.get(key).unwrap())?;

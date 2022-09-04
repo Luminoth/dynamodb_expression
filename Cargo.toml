@@ -15,11 +15,13 @@ name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.40"
+anyhow = "1.0.63"
+aws-sdk-dynamodb = "0.18.0"
 derivative = "2.2.0"
-aws-sdk-dynamodb = "0.6.0"
-thiserror = "1.0.24"
+strum = "0.24.1"
+strum_macros = "0.24.3"
+thiserror = "1.0.33"
 
 [dev-dependencies]
-aws-config = "0.6.0"
+aws-config = "0.48.0"
 tokio-test = "0.4.2"

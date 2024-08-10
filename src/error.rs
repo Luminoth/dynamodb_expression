@@ -1,5 +1,6 @@
 //! Ported from [error.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/error.go)
 
+/// Represents a DynamoDB Expression Error
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 pub enum ExpressionError {
     /// Returned if invalid parameters are encountered.

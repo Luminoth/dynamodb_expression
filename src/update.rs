@@ -11,9 +11,7 @@ use crate::{
     ValueBuilderImpl,
 };
 
-#[derive(
-    Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative, strum_macros::AsRefStr,
-)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative, strum::AsRefStr)]
 #[derivative(Default)]
 pub(crate) enum OperationMode {
     #[derivative(Default)]
@@ -130,7 +128,7 @@ impl UpdateBuilder {
     ) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Delete)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(OperationBuilder {
                 name,
                 value: Some(value.into_operand_builder()),
@@ -147,7 +145,7 @@ impl UpdateBuilder {
     ) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Add)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(OperationBuilder {
                 name,
                 value: Some(value.into_operand_builder()),
@@ -160,7 +158,7 @@ impl UpdateBuilder {
     pub fn remove(mut self, name: Box<NameBuilder>) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Remove)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(OperationBuilder {
                 name,
                 value: None,
@@ -177,7 +175,7 @@ impl UpdateBuilder {
     ) -> UpdateBuilder {
         self.operations
             .entry(OperationMode::Set)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(OperationBuilder {
                 name,
                 value: Some(operand_builder),
@@ -219,7 +217,7 @@ impl TreeBuilder for UpdateBuilder {
 
 #[cfg(test)]
 mod tests {
-    use aws_sdk_dynamodb::model::AttributeValue;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
 

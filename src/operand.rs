@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
-use aws_sdk_dynamodb::model::AttributeValue;
+use aws_sdk_dynamodb::types::AttributeValue;
 use derivative::*;
 
 use crate::{error::ExpressionError, ExpressionNode};
@@ -393,7 +393,7 @@ pub trait ListAppendBuilder: OperandBuilder {
 
 #[cfg(test)]
 mod tests {
-    use aws_sdk_dynamodb::model::AttributeValue;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
 

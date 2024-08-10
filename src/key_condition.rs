@@ -57,11 +57,11 @@ impl KeyConditionBuilder {
         mut node: ExpressionNode,
     ) -> anyhow::Result<ExpressionNode> {
         match mode {
-            KeyConditionMode::Equal => node.fmt_expression = "$c = $c".to_owned(),
-            KeyConditionMode::LessThan => node.fmt_expression = "$c < $c".to_owned(),
-            KeyConditionMode::LessThanEqual => node.fmt_expression = "$c <= $c".to_owned(),
-            KeyConditionMode::GreaterThan => node.fmt_expression = "$c > $c".to_owned(),
-            KeyConditionMode::GreaterThanEqual => node.fmt_expression = "$c >= $c".to_owned(),
+            KeyConditionMode::Equal => "$c = $c".clone_into(&mut node.fmt_expression),
+            KeyConditionMode::LessThan => "$c < $c".clone_into(&mut node.fmt_expression),
+            KeyConditionMode::LessThanEqual => "$c <= $c".clone_into(&mut node.fmt_expression),
+            KeyConditionMode::GreaterThan => "$c > $c".clone_into(&mut node.fmt_expression),
+            KeyConditionMode::GreaterThanEqual => "$c >= $c".clone_into(&mut node.fmt_expression),
             _ => bail!(
                 "build compare key condition error: unsupported mode: {:?}",
                 mode
@@ -85,21 +85,21 @@ impl KeyConditionBuilder {
 
         // create a string with escaped characters to substitute them with proper
         // aliases during runtime
-        node.fmt_expression = "($c) AND ($c)".to_owned();
+        "($c) AND ($c)".clone_into(&mut node.fmt_expression);
 
         Ok(node)
     }
 
     fn between_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "$c BETWEEN $c AND $c".to_owned();
+        "$c BETWEEN $c AND $c".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn begins_with_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "begins_with ($c, $c)".to_owned();
+        "begins_with ($c, $c)".clone_into(&mut node.fmt_expression);
 
         node
     }
@@ -283,7 +283,7 @@ impl KeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use aws_sdk_dynamodb::model::AttributeValue;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
 

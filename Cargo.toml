@@ -1,6 +1,6 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.3"                                              # remember to update html_root_url
+version = "0.1.4"                                              # remember to update html_root_url
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"
@@ -15,13 +15,12 @@ name = "dynamodb_expression"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.68"
-aws-sdk-dynamodb = "0.22.0"
+anyhow = "1.0.86"
+aws-sdk-dynamodb = "1.40.0"
 derivative = "2.2.0"
-strum = "0.24.1"
-strum_macros = "0.24.3"
-thiserror = "1.0.38"
+strum = { version = "0.26.3", features = ["derive"] }
+thiserror = "1.0.63"
 
 [dev-dependencies]
-aws-config = "0.52.0"
-tokio-test = "0.4.2"
+aws-config = "1.5.5"
+tokio-test = "0.4.4"

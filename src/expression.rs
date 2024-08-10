@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
-use aws_sdk_dynamodb::model::AttributeValue;
+use aws_sdk_dynamodb::types::AttributeValue;
 
 use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
 
@@ -370,7 +370,7 @@ impl Expression {
     ///     .condition_expression(expression.condition().cloned().unwrap())
     ///     .set_expression_attribute_names(expression.names().clone())
     ///     .set_expression_attribute_values(expression.values().clone())
-    ///     .key("PartitionKey".to_owned(), aws_sdk_dynamodb::model::AttributeValue::S("SomeKey".to_owned()))
+    ///     .key("PartitionKey".to_owned(), aws_sdk_dynamodb::types::AttributeValue::S("SomeKey".to_owned()))
     ///     .table_name("SomeTable".to_owned());
     /// # })
     /// ```
@@ -588,7 +588,7 @@ impl ExpressionNode {
 
 #[cfg(test)]
 mod tests {
-    use aws_sdk_dynamodb::model::AttributeValue;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
 

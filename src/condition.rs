@@ -72,7 +72,7 @@ enum ConditionMode {
 /// the DynamoDB type that is being checked and ensure compile time checks.
 ///
 /// [More Information](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html#Expressions.OperatorsAndFunctions.Functions)
-#[derive(Copy, Clone, PartialEq, Eq, Debug, strum_macros::AsRefStr)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, strum::AsRefStr)]
 pub enum DynamoDbAttributeType {
     /// String represents the DynamoDB String type
     #[strum(serialize = "S")]
@@ -231,12 +231,12 @@ impl ConditionBuilder {
         mut node: ExpressionNode,
     ) -> anyhow::Result<ExpressionNode> {
         match mode {
-            ConditionMode::Equal => node.fmt_expression = "$c = $c".to_owned(),
-            ConditionMode::NotEqual => node.fmt_expression = "$c <> $c".to_owned(),
-            ConditionMode::LessThan => node.fmt_expression = "$c < $c".to_owned(),
-            ConditionMode::LessThanEqual => node.fmt_expression = "$c <= $c".to_owned(),
-            ConditionMode::GreaterThan => node.fmt_expression = "$c > $c".to_owned(),
-            ConditionMode::GreaterThanEqual => node.fmt_expression = "$c >= $c".to_owned(),
+            ConditionMode::Equal => "$c = $c".clone_into(&mut node.fmt_expression),
+            ConditionMode::NotEqual => "$c <> $c".clone_into(&mut node.fmt_expression),
+            ConditionMode::LessThan => "$c < $c".clone_into(&mut node.fmt_expression),
+            ConditionMode::LessThanEqual => "$c <= $c".clone_into(&mut node.fmt_expression),
+            ConditionMode::GreaterThan => "$c > $c".clone_into(&mut node.fmt_expression),
+            ConditionMode::GreaterThanEqual => "$c >= $c".clone_into(&mut node.fmt_expression),
             _ => bail!(
                 "build compare condition error: unsupported mode: {:?}",
                 mode
@@ -271,14 +271,14 @@ impl ConditionBuilder {
     fn not_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // create a string with escaped characters to substitute them with proper
         // aliases during runtime
-        node.fmt_expression = "NOT ($c)".to_owned();
+        "NOT ($c)".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn between_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "$c BETWEEN $c AND $c".to_owned();
+        "$c BETWEEN $c AND $c".clone_into(&mut node.fmt_expression);
 
         node
     }
@@ -298,35 +298,35 @@ impl ConditionBuilder {
 
     fn attr_exists_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "attribute_exists ($c)".to_owned();
+        "attribute_exists ($c)".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn attr_not_exists_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "attribute_not_exists ($c)".to_owned();
+        "attribute_not_exists ($c)".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn attr_type_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "attribute_type ($c, $c)".to_owned();
+        "attribute_type ($c, $c)".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn begins_with_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "begins_with ($c, $c)".to_owned();
+        "begins_with ($c, $c)".clone_into(&mut node.fmt_expression);
 
         node
     }
 
     fn contains_build_condition(mut node: ExpressionNode) -> ExpressionNode {
         // Create a string with special characters that can be substituted later: $c
-        node.fmt_expression = "contains ($c, $c)".to_owned();
+        "contains ($c, $c)".clone_into(&mut node.fmt_expression);
 
         node
     }
@@ -855,6 +855,7 @@ pub fn contains(name: Box<NameBuilder>, substr: impl Into<String>) -> ConditionB
     }
 }
 
+/// Trait for building a ConditionBuilder representing the equality clause of the two argument OperandBuilders.
 pub trait EqualBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the equality clause of the two argument OperandBuilders.
     ///
@@ -914,6 +915,7 @@ pub trait EqualBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the not equal clause of the two argument OperandBuilders.
 pub trait NotEqualBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the not equal clause of the two argument OperandBuilders.
     ///
@@ -974,6 +976,7 @@ pub trait NotEqualBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the less than clause of the two argument OperandBuilders.
 pub trait LessThanBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the less than clause of the two argument OperandBuilders.
     ///
@@ -1033,6 +1036,7 @@ pub trait LessThanBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the less than equal clause of the two argument OperandBuilders.
 pub trait LessThanEqualBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the less than equal to clause of the two argument OperandBuilders.
     ///
@@ -1092,6 +1096,7 @@ pub trait LessThanEqualBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the greater than clause of the two argument OperandBuilders.
 pub trait GreaterThanBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the greater than clause of the two argument OperandBuilders.
     ///
@@ -1151,6 +1156,7 @@ pub trait GreaterThanBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the greater than equal to clause of the two argument OperandBuilders.
 pub trait GreaterThanEqualBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the greater than equal to clause of the two argument OperandBuilders.
     ///
@@ -1210,6 +1216,7 @@ pub trait GreaterThanEqualBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the result of the BETWEEN function in DynamoDB Condition Expressions.
 pub trait BetweenBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the result of the
     /// BETWEEN function in DynamoDB Condition Expressions.
@@ -1273,6 +1280,7 @@ pub trait BetweenBuilder: OperandBuilder {
     }
 }
 
+/// Trait for building a ConditionBuilder representing the result of the IN function in DynamoDB Condition Expressions.
 pub trait InBuilder: OperandBuilder {
     /// Returns a ConditionBuilder representing the result of the IN function
     /// in DynamoDB Condition Expressions.
@@ -1483,7 +1491,7 @@ impl InBuilder for SizeBuilder {}
 
 #[cfg(test)]
 mod tests {
-    use aws_sdk_dynamodb::model::AttributeValue;
+    use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
 

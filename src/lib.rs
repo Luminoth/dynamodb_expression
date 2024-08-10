@@ -55,7 +55,8 @@
 //! with the corresponding names() and values() methods, the DynamoDB operation will
 //! run into a logic error.
 
-#![doc(html_root_url = "https://docs.rs/dynamodb_expression/0.1.3")]
+#![doc(html_root_url = "https://docs.rs/dynamodb_expression/0.1.4")]
+//#![deny(missing_docs)]
 #![deny(warnings)]
 
 mod condition;
@@ -106,6 +107,6 @@ impl_value_builder!(&'static str);
 impl_value_builder!(Vec<&'static str>);
 impl_value_builder!(String);
 impl_value_builder!(Vec<String>);
-impl_value_builder!(aws_sdk_dynamodb::model::AttributeValue);
+impl_value_builder!(aws_sdk_dynamodb::types::AttributeValue);
 impl_value_builder!(Vec<Box<dyn ValueBuilderImpl>>);
 impl_value_builder!(std::collections::HashMap<String, Box<dyn ValueBuilderImpl>>);

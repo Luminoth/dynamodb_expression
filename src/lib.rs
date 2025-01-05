@@ -55,7 +55,6 @@
 //! with the corresponding names() and values() methods, the DynamoDB operation will
 //! run into a logic error.
 
-#![doc(html_root_url = "https://docs.rs/dynamodb_expression/0.1.4")]
 //#![deny(missing_docs)]
 #![deny(warnings)]
 

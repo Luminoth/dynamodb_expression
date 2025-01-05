@@ -1,26 +1,21 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.4"                                              # remember to update html_root_url
+version = "0.1.5"
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/Luminoth/dynamodb_expression"
 edition = "2021"
 keywords = ["dynamodb"]
-
 description = "Port of Go DynamoDB Expressions to Rust"
 
-[lib]
-name = "dynamodb_expression"
-path = "src/lib.rs"
-
 [dependencies]
-anyhow = "1.0.86"
-aws-sdk-dynamodb = "1.40.0"
+anyhow = "1.0.95"
+aws-sdk-dynamodb = "1.58.0"
 derivative = "2.2.0"
 strum = { version = "0.26.3", features = ["derive"] }
-thiserror = "1.0.63"
+thiserror = "2.0.9"
 
 [dev-dependencies]
-aws-config = "1.5.5"
+aws-config = "1.5.13"
 tokio-test = "0.4.4"

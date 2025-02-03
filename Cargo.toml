@@ -19,3 +19,6 @@ thiserror = "2.0.9"
 [dev-dependencies]
 aws-config = "1.5.13"
 tokio-test = "0.4.4"
+
+[lints.rust]
+rust_2024_compatibility = "warn"

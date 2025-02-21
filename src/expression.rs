@@ -593,7 +593,6 @@ mod tests {
     use crate::*;
 
     //https://stackoverflow.com/questions/27582739/how-do-i-create-a-hashmap-literal
-    #[allow(edition_2024_expr_fragment_specifier)]
     macro_rules! hashmap(
         { $($key:expr => $value:expr),+ } => {
             {

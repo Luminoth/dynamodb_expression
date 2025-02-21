@@ -5,7 +5,7 @@ authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/Luminoth/dynamodb_expression"
-edition = "2021"
+edition = "2024"
 keywords = ["dynamodb"]
 description = "Port of Go DynamoDB Expressions to Rust"
 
@@ -19,6 +19,3 @@ thiserror = "2.0.9"
 [dev-dependencies]
 aws-config = "1.5.13"
 tokio-test = "0.4.4"
-
-[lints.rust]
-rust_2024_compatibility = "warn"

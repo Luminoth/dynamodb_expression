@@ -1,6 +1,6 @@
 [package]
 name = "dynamodb_expression"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Shane Lillie <ignignokterr@gmail.com>"]
 license-file = "LICENSE"
 readme = "README.md"
@@ -10,12 +10,12 @@ keywords = ["dynamodb"]
 description = "Port of Go DynamoDB Expressions to Rust"
 
 [dependencies]
-anyhow = "1.0.95"
-aws-sdk-dynamodb = "1.58.0"
+anyhow = "1.0.98"
+aws-sdk-dynamodb = "1.79.0"
 derivative = "2.2.0"
-strum = { version = "0.26.3", features = ["derive"] }
-thiserror = "2.0.9"
+strum = { version = "0.27.1", features = ["derive"] }
+thiserror = "2.0.12"
 
 [dev-dependencies]
-aws-config = "1.5.13"
+aws-config = "1.6.3"
 tokio-test = "0.4.4"

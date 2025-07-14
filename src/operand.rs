@@ -6,7 +6,7 @@ use anyhow::bail;
 use aws_sdk_dynamodb::types::AttributeValue;
 use derivative::*;
 
-use crate::{error::ExpressionError, ExpressionNode};
+use crate::{ExpressionNode, error::ExpressionError};
 
 macro_rules! into_operand_builder {
     () => {
@@ -192,7 +192,7 @@ impl OperandBuilder for NameBuilder {
 
             let mut substr = "";
             if word.chars().nth(word.len() - 1).unwrap() == ']' {
-                for (j, ch) in word.chars().enumerate() {
+                for (j, ch) in word.char_indices() {
                     if ch == '[' {
                         substr = &word[j..];
                         word = &word[..j];
@@ -210,7 +210,7 @@ impl OperandBuilder for NameBuilder {
 
             // Create a string with special characters that can be substituted later: $p
             node.names.push(word.to_owned());
-            fmt_names.push(format!("$n{}", substr));
+            fmt_names.push(format!("$n{substr}"));
         }
 
         node.fmt_expression = fmt_names.join(".");

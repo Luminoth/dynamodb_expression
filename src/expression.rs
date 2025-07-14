@@ -262,7 +262,7 @@ impl Builder {
         if !alias_list.names.is_empty() {
             let mut names = HashMap::new();
             for (ind, val) in alias_list.names.iter().enumerate() {
-                names.insert(format!("#{}", ind), val.clone());
+                names.insert(format!("#{ind}"), val.clone());
             }
             expression.names = Some(names);
         }
@@ -270,7 +270,7 @@ impl Builder {
         if !alias_list.values.is_empty() {
             let mut values = HashMap::new();
             for (ind, val) in alias_list.values.iter().enumerate() {
-                values.insert(format!(":{}", ind), val.clone());
+                values.insert(format!(":{ind}"), val.clone());
             }
             expression.values = Some(values);
         }
@@ -453,7 +453,7 @@ impl AliasList {
 
         for (idx, name) in self.names.iter().enumerate() {
             if nm == *name {
-                return format!("#{}", idx);
+                return format!("#{idx}");
             }
         }
 

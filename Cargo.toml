@@ -11,11 +11,11 @@ description = "Port of Go DynamoDB Expressions to Rust"
 
 [dependencies]
 anyhow = "1.0.100"
-aws-sdk-dynamodb = "1.95.0"
+aws-sdk-dynamodb = "1.101.0"
 derivative = "2.2.0"
 strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.17"
 
 [dev-dependencies]
-aws-config = "1.8.8"
-tokio-test = "0.4.4"
+aws-config = "1.8.12"
+tokio-test = "0.4.5"

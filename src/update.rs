@@ -201,7 +201,7 @@ impl TreeBuilder for UpdateBuilder {
         for mode in self.operations.keys() {
             modes.push(mode);
         }
-        modes.sort_unstable_by(|x, y| x.as_ref().partial_cmp(y.as_ref()).unwrap());
+        modes.sort_unstable_by(|x, y| x.as_ref().cmp(y.as_ref()));
 
         for key in modes {
             writeln!(ret.fmt_expression, "{} $c", key.as_ref())?;

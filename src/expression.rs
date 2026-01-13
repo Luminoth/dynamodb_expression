@@ -513,52 +513,40 @@ impl ExpressionNode {
     }
 
     fn build_expression_string(&self, alias_list: &mut AliasList) -> anyhow::Result<String> {
-        // Since each exprNode contains a slice of names, values, and children that
-        // correspond to the escaped characters, we an index to traverse the slices
+        // since each exprNode contains a slice of names, values, and children that
+        // correspond to the escaped characters, we maintain indices to traverse the slices
+        // index.0 -> names, index.1 -> values, index.2 -> children
         let mut index = (0, 0, 0);
 
-        let mut formatted_expression = self.fmt_expression.clone();
+        // pre-allocate capacity to match the original expression length as a heuristic
+        // to minimize reallocations, though it might grow if replacements are longer
+        let mut formatted_expression = String::with_capacity(self.fmt_expression.len());
+        let mut chars = self.fmt_expression.chars();
 
-        let mut idx = 0;
-        while idx < formatted_expression.len() {
-            if formatted_expression.chars().nth(idx).unwrap() != '$' {
-                idx += 1;
+        // look for '$' which indicates the start of an escape sequence
+        while let Some(c) = chars.next() {
+            if c != '$' {
+                formatted_expression.push(c);
                 continue;
             }
 
-            if idx == formatted_expression.len() - 1 {
-                bail!("buildexprNode error: invalid escape character");
-            }
-
-            // if an escaped character is found, substitute it with the proper alias
-            // TODO consider AST instead of string in the future
-            let rune = formatted_expression.chars().nth(idx + 1).unwrap();
-            let alias = match rune {
-                'n' => {
-                    let alias = self.substitute_path(index.0, alias_list)?;
+            // peek at the next character to determine what to substitute
+            match chars.next() {
+                Some('n') => {
+                    formatted_expression.push_str(&self.substitute_path(index.0, alias_list)?);
                     index.0 += 1;
-                    alias
                 }
-                'v' => {
-                    let alias = self.substitute_value(index.1, alias_list)?;
+                Some('v') => {
+                    formatted_expression.push_str(&self.substitute_value(index.1, alias_list)?);
                     index.1 += 1;
-                    alias
                 }
-                'c' => {
-                    let alias = self.substitute_child(index.2, alias_list)?;
+                Some('c') => {
+                    formatted_expression.push_str(&self.substitute_child(index.2, alias_list)?);
                     index.2 += 1;
-                    alias
                 }
-                _ => bail!("buildexprNode error: invalid escape rune {}", rune),
-            };
-
-            formatted_expression = format!(
-                "{}{}{}",
-                &formatted_expression.as_str()[..idx],
-                alias,
-                &formatted_expression.as_str()[idx + 2..]
-            );
-            idx += alias.len();
+                Some(other) => bail!("buildexprNode error: invalid escape rune {}", other),
+                None => bail!("buildexprNode error: invalid escape character"),
+            }
         }
 
         Ok(formatted_expression)

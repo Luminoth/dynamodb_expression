@@ -6,16 +6,18 @@ license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/Luminoth/dynamodb_expression"
 edition = "2024"
-keywords = ["dynamodb"]
-description = "Port of Go DynamoDB Expressions to Rust"
+keywords = ["dynamodb", "aws", "expression", "builder"]
+description = "A builder for Amazon DynamoDB expressions, ported from the AWS SDK for Go."
 
 [dependencies]
 anyhow = "1.0.102"
-aws-sdk-dynamodb = "1.110.0"
+aws-sdk-dynamodb = { version = "1.110.0", features = [
+    "behavior-version-latest",
+] }
 derivative = "2.2.0"
 strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 
 [dev-dependencies]
-aws-config = "1.8.15"
+aws-config = { version = "1.8.15", features = ["behavior-version-latest"] }
 tokio-test = "0.4.5"

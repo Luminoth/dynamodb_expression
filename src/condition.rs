@@ -62,7 +62,7 @@ enum ConditionMode {
     /// BeginsWith represents the Begins With Condition
     BeginsWith,
 
-    // Contains represents the Contains Condition
+    /// Contains represents the Contains Condition
     Contains,
 }
 
@@ -1270,13 +1270,13 @@ pub trait BetweenBuilder: OperandBuilder {
     /// ```
     fn between(
         self: Box<Self>,
-        upper: Box<dyn OperandBuilder>,
         lower: Box<dyn OperandBuilder>,
+        upper: Box<dyn OperandBuilder>,
     ) -> ConditionBuilder
     where
         Self: Sized + 'static,
     {
-        between(self, upper, lower)
+        between(self, lower, upper)
     }
 }
 

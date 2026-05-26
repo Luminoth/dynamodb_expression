@@ -212,14 +212,14 @@ pub fn key_and(left: KeyConditionBuilder, right: KeyConditionBuilder) -> KeyCond
 
 pub fn key_between(
     key: Box<KeyBuilder>,
-    upper: Box<dyn ValueBuilderImpl>,
     lower: Box<dyn ValueBuilderImpl>,
+    upper: Box<dyn ValueBuilderImpl>,
 ) -> KeyConditionBuilder {
     KeyConditionBuilder {
         operand_list: vec![
             key,
-            upper.into_operand_builder(),
             lower.into_operand_builder(),
+            upper.into_operand_builder(),
         ],
         key_condition_list: Vec::new(),
         mode: KeyConditionMode::Between,
@@ -270,10 +270,10 @@ impl KeyBuilder {
 
     pub fn between(
         self: Box<KeyBuilder>,
-        upper: Box<dyn ValueBuilderImpl>,
         lower: Box<dyn ValueBuilderImpl>,
+        upper: Box<dyn ValueBuilderImpl>,
     ) -> KeyConditionBuilder {
-        key_between(self, upper, lower)
+        key_between(self, lower, upper)
     }
 
     pub fn begins_with(self: Box<KeyBuilder>, prefix: impl Into<String>) -> KeyConditionBuilder {

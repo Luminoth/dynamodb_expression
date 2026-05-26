@@ -43,8 +43,6 @@ pub struct ValueBuilder<T> {
     value: T,
 }
 
-impl<T> ValueBuilder<T> {}
-
 impl ValueBuilderImpl for ValueBuilder<bool> {
     fn attribute_value(&self) -> AttributeValue {
         AttributeValue::Bool(self.value)

@@ -383,7 +383,7 @@ impl Expression {
     ///
     /// This method is used to satisfy the members of DynamoDB
     /// input structs. If the Expression does not have a filter expression this
-    /// method returns nil.
+    /// method returns None.
     ///
     /// # Example
     ///
@@ -411,14 +411,100 @@ impl Expression {
         self.return_expression(ExpressionType::Filter)
     }
 
+    /// Returns the string corresponding to the Projection Expression of the
+    /// argument Expression.
+    ///
+    /// This method is used to satisfy the members of DynamoDB
+    /// input structs. If the Expression does not have a projection expression this
+    /// method returns None.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+    /// let expression = builder.build().unwrap();
+    ///
+    /// let query = client.query()
+    ///     .key_condition_expression(expression.key_condition().cloned().unwrap())
+    ///     .projection_expression(expression.projection().cloned().unwrap())
+    ///     .set_expression_attribute_names(expression.names().clone())
+    ///     .set_expression_attribute_values(expression.values().clone())
+    ///     .table_name("SomeTable".to_owned());
+    /// # })
+    /// ```
     pub fn projection(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Projection)
     }
 
+    /// Returns the string corresponding to the Key Condition Expression of the
+    /// argument Expression.
+    ///
+    /// This method is used to satisfy the members of DynamoDB
+    /// input structs. If the argument Expression does not have a key condition
+    /// expression this method returns None.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
+    /// let key_cond = key("someKey").equal(value("someValue"));
+    /// let proj = names_list(name("aName"), vec![name("anotherName"), name("oneOtherName")]);
+    /// let builder = Builder::new().with_key_condition(key_cond).with_projection(proj);
+    /// let expression = builder.build().unwrap();
+    ///
+    /// let query = client.query()
+    ///     .key_condition_expression(expression.key_condition().cloned().unwrap())
+    ///     .projection_expression(expression.projection().cloned().unwrap())
+    ///     .set_expression_attribute_names(expression.names().clone())
+    ///     .set_expression_attribute_values(expression.values().clone())
+    ///     .table_name("SomeTable".to_owned());
+    /// # })
+    /// ```
     pub fn key_condition(&self) -> Option<&String> {
         self.return_expression(ExpressionType::KeyCondition)
     }
 
+    /// Returns the string corresponding to the Update Expression of the
+    /// argument Expression.
+    ///
+    /// This method is used to satisfy the members of DynamoDB
+    /// input structs. If the argument Expression does not have an update
+    /// expression this method returns None.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use dynamodb_expression::*;
+    ///
+    /// # tokio_test::block_on(async {
+    /// let shared_config = aws_config::from_env().load().await;
+    /// let client = aws_sdk_dynamodb::Client::new(&shared_config);
+    ///
+    /// let upd = set(name("someKey"), value("someValue"));
+    /// let builder = Builder::new().with_update(upd);
+    /// let expression = builder.build().unwrap();
+    ///
+    /// let update_item = client.update_item()
+    ///     .update_expression(expression.update().cloned().unwrap())
+    ///     .set_expression_attribute_names(expression.names().clone())
+    ///     .set_expression_attribute_values(expression.values().clone())
+    ///     .key("PartitionKey".to_owned(), aws_sdk_dynamodb::types::AttributeValue::S("SomeKey".to_owned()))
+    ///     .table_name("SomeTable".to_owned());
+    /// # })
+    /// ```
     pub fn update(&self) -> Option<&String> {
         self.return_expression(ExpressionType::Update)
     }
@@ -475,21 +561,21 @@ pub(crate) struct ExpressionNode {
 }
 
 impl ExpressionNode {
-    pub(crate) fn from_names(names: Vec<String>, fmt_exression: impl Into<String>) -> Self {
+    pub(crate) fn from_names(names: Vec<String>, fmt_expression: impl Into<String>) -> Self {
         Self {
             names,
-            fmt_expression: fmt_exression.into(),
+            fmt_expression: fmt_expression.into(),
             ..Default::default()
         }
     }
 
     pub(crate) fn from_values(
         values: Vec<AttributeValue>,
-        fmt_exression: impl Into<String>,
+        fmt_expression: impl Into<String>,
     ) -> Self {
         Self {
             values,
-            fmt_expression: fmt_exression.into(),
+            fmt_expression: fmt_expression.into(),
             ..Default::default()
         }
     }
@@ -1117,7 +1203,7 @@ mod tests {
     }
 
     #[test]
-    fn childre_out_of_range() -> anyhow::Result<()> {
+    fn children_out_of_range() -> anyhow::Result<()> {
         let input = ExpressionNode {
             fmt_expression: "$!".to_owned(),
             ..Default::default()

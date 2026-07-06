@@ -10,7 +10,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-dynamodb_expression = "0.1.8"
+dynamodb_expression = "0.2.0"
 aws-sdk-dynamodb = "1"
 ```
 

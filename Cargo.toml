@@ -10,8 +10,8 @@ keywords = ["dynamodb", "aws", "expression", "builder"]
 description = "A builder for Amazon DynamoDB expressions, ported from the AWS SDK for Go."
 
 [dependencies]
-anyhow = "1.0.102"
-aws-sdk-dynamodb = { version = "1.112.0", features = [
+anyhow = "1.0.103"
+aws-sdk-dynamodb = { version = "1.116.0", features = [
     "behavior-version-latest",
 ] }
 derivative = "2.2.0"
@@ -19,5 +19,5 @@ strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 
 [dev-dependencies]
-aws-config = { version = "1.8.17", features = ["behavior-version-latest"] }
+aws-config = { version = "1.8.18", features = ["behavior-version-latest"] }
 tokio-test = "0.4.5"

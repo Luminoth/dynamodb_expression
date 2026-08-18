@@ -4,8 +4,8 @@ use anyhow::bail;
 use derivative::*;
 
 use crate::{
-    error::ExpressionError, value, ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder,
-    TreeBuilder,
+    ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder, error::ExpressionError,
+    value,
 };
 
 /// Specifies the types of the struct conditionBuilder,

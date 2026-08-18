@@ -7,8 +7,8 @@ use anyhow::bail;
 use derivative::*;
 
 use crate::{
-    error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder,
-    ValueBuilderImpl,
+    ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, ValueBuilderImpl,
+    error::ExpressionError,
 };
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative, strum::AsRefStr)]

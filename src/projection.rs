@@ -2,7 +2,7 @@
 
 use anyhow::bail;
 
-use crate::{error::ExpressionError, ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder};
+use crate::{ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, error::ExpressionError};
 
 #[derive(Default, Debug, Clone)]
 pub struct ProjectionBuilder {

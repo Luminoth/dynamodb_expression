@@ -4,8 +4,8 @@ use anyhow::bail;
 use derivative::*;
 
 use crate::{
-    error::ExpressionError, value, ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder,
-    ValueBuilderImpl,
+    ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilderImpl,
+    error::ExpressionError, value,
 };
 
 #[derive(Copy, Clone, PartialEq, Debug, Derivative)]

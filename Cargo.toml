@@ -11,8 +11,10 @@ description = "A builder for Amazon DynamoDB expressions, ported from the AWS SD
 
 [dependencies]
 anyhow = "1.0.103"
-aws-sdk-dynamodb = { version = "1.116.0", features = [
+aws-sdk-dynamodb = { version = "1.116.0", default-features = false, features = [
     "behavior-version-latest",
+    "default-https-client",
+    "rt-tokio",
 ] }
 derivative = "2.2.0"
 strum = { version = "0.28.0", features = ["derive"] }

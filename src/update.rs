@@ -4,17 +4,15 @@ use std::collections::HashMap;
 use std::fmt::Write;
 
 use anyhow::bail;
-use derivative::*;
 
 use crate::{
     ExpressionNode, NameBuilder, OperandBuilder, TreeBuilder, ValueBuilderImpl,
     error::ExpressionError,
 };
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Derivative, strum::AsRefStr)]
-#[derivative(Default)]
+#[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug, Default, strum::AsRefStr)]
 pub(crate) enum OperationMode {
-    #[derivative(Default)]
+    #[default]
     #[strum(serialize = "SET")]
     Set,
 

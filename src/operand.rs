@@ -2,11 +2,9 @@
 
 use std::collections::HashMap;
 
+use crate::{ExpressionNode, error::ExpressionError};
 use anyhow::bail;
 use aws_sdk_dynamodb::types::AttributeValue;
-use derivative::*;
-
-use crate::{ExpressionNode, error::ExpressionError};
 
 macro_rules! into_operand_builder {
     () => {
@@ -268,10 +266,9 @@ pub fn key(key: impl Into<String>) -> Box<KeyBuilder> {
     Box::new(KeyBuilder { key: key.into() })
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
-#[derivative(Default)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 enum SetValueMode {
-    #[derivative(Default)]
+    #[default]
     Unset,
     Plus,
     Minus,

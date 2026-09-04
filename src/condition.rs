@@ -1,7 +1,6 @@
 //! Ported from [condition.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go)
 
 use anyhow::bail;
-use derivative::*;
 
 use crate::{
     ExpressionNode, NameBuilder, OperandBuilder, SizeBuilder, TreeBuilder, error::ExpressionError,
@@ -10,11 +9,10 @@ use crate::{
 
 /// Specifies the types of the struct conditionBuilder,
 /// representing the different types of Conditions (i.e. And, Or, Between, ...)
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Derivative)]
-#[derivative(Default)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 enum ConditionMode {
     /// Unset catches errors for unset ConditionBuilder structs
-    #[derivative(Default)]
+    #[default]
     Unset,
 
     /// Equal represents the Equals Condition

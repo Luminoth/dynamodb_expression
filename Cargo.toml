@@ -19,7 +19,6 @@ aws-sdk-dynamodb = { version = "1.116.0", default-features = false, features = [
     "default-https-client",
     "rt-tokio",
 ] }
-derivative = "2.2.0"
 strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
 

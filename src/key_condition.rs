@@ -1,17 +1,15 @@
 //! Ported from [key_condition.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/key_condition.go)
 
 use anyhow::bail;
-use derivative::*;
 
 use crate::{
     ExpressionNode, KeyBuilder, OperandBuilder, TreeBuilder, ValueBuilderImpl,
     error::ExpressionError, value,
 };
 
-#[derive(Copy, Clone, PartialEq, Debug, Derivative)]
-#[derivative(Default)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 enum KeyConditionMode {
-    #[derivative(Default)]
+    #[default]
     Unset,
     Invalid,
     Equal,

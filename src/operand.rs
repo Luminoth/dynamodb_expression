@@ -75,11 +75,12 @@ impl ValueBuilderImpl for ValueBuilder<&'static str> {
 
 impl ValueBuilderImpl for ValueBuilder<Vec<&'static str>> {
     fn attribute_value(&self) -> AttributeValue {
-        if self.value.is_empty() {
-            return AttributeValue::Null(true);
-        }
-
-        AttributeValue::Ss(self.value.iter().map(|&x| x.to_owned()).collect())
+        AttributeValue::L(
+            self.value
+                .iter()
+                .map(|&x| AttributeValue::S(x.to_owned()))
+                .collect(),
+        )
     }
 
     into_operand_builder!();
@@ -95,11 +96,12 @@ impl ValueBuilderImpl for ValueBuilder<String> {
 
 impl ValueBuilderImpl for ValueBuilder<Vec<String>> {
     fn attribute_value(&self) -> AttributeValue {
-        if self.value.is_empty() {
-            return AttributeValue::Null(true);
-        }
-
-        AttributeValue::Ss(self.value.clone())
+        AttributeValue::L(
+            self.value
+                .iter()
+                .map(|x| AttributeValue::S(x.clone()))
+                .collect(),
+        )
     }
 
     into_operand_builder!();
@@ -115,10 +117,6 @@ impl ValueBuilderImpl for ValueBuilder<AttributeValue> {
 
 impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
     fn attribute_value(&self) -> AttributeValue {
-        if self.value.is_empty() {
-            return AttributeValue::Null(true);
-        }
-
         let value = self.value.iter().map(|x| x.attribute_value()).collect();
 
         AttributeValue::L(value)
@@ -129,10 +127,6 @@ impl ValueBuilderImpl for ValueBuilder<Vec<Box<dyn ValueBuilderImpl>>> {
 
 impl ValueBuilderImpl for ValueBuilder<HashMap<String, Box<dyn ValueBuilderImpl>>> {
     fn attribute_value(&self) -> AttributeValue {
-        if self.value.is_empty() {
-            return AttributeValue::Null(true);
-        }
-
         let value = self
             .value
             .iter()
@@ -164,6 +158,28 @@ impl NameBuilder {
     }
 }
 
+// every '[' must be matched by a later ']' with a non-empty, all-digit index between them
+fn valid_list_indexes(word: &str) -> bool {
+    let open_positions: Vec<usize> = word.match_indices('[').map(|(i, _)| i).collect();
+    let close_positions: Vec<usize> = word.match_indices(']').map(|(i, _)| i).collect();
+
+    if open_positions.len() != close_positions.len() {
+        return false;
+    }
+
+    open_positions
+        .iter()
+        .zip(close_positions.iter())
+        .all(|(&open, &close)| {
+            if open > close {
+                return false;
+            }
+
+            let part = &word[open + 1..close];
+            !part.is_empty() && part.bytes().all(|c| c.is_ascii_digit())
+        })
+}
+
 impl OperandBuilder for NameBuilder {
     fn build_operand(&self) -> anyhow::Result<Operand> {
         if self.name.is_empty() {
@@ -180,7 +196,14 @@ impl OperandBuilder for NameBuilder {
 
         for mut word in name_split {
             if word.is_empty() {
-                bail!(ExpressionError::UnsetParameterError(
+                bail!(ExpressionError::InvalidParameterError(
+                    "BuildOperand".to_owned(),
+                    "NameBuilder".to_owned(),
+                ));
+            }
+
+            if !valid_list_indexes(word) {
+                bail!(ExpressionError::InvalidParameterError(
                     "BuildOperand".to_owned(),
                     "NameBuilder".to_owned(),
                 ));
@@ -198,7 +221,7 @@ impl OperandBuilder for NameBuilder {
             }
 
             if word.is_empty() {
-                bail!(ExpressionError::UnsetParameterError(
+                bail!(ExpressionError::InvalidParameterError(
                     "BuildOperand".to_owned(),
                     "NameBuilder".to_owned(),
                 ));
@@ -560,10 +583,96 @@ mod tests {
                 .build_operand()
                 .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
                 .unwrap_err(),
-            error::ExpressionError::UnsetParameterError(
+            error::ExpressionError::InvalidParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
             )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn trailing_dot_name() -> anyhow::Result<()> {
+        let input = name("foo.");
+
+        assert_eq!(
+            input
+                .build_operand()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::InvalidParameterError(
+                "BuildOperand".to_owned(),
+                "NameBuilder".to_owned()
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_list_index() -> anyhow::Result<()> {
+        // missing brackets, mismatched brackets, empty index, non-numeric index
+        for input in ["foo[", "foo]", "foo]1[", "foo[]", "foo[a]", "foo[0][a]"] {
+            assert_eq!(
+                name(input)
+                    .build_operand()
+                    .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                    .unwrap_err(),
+                error::ExpressionError::InvalidParameterError(
+                    "BuildOperand".to_owned(),
+                    "NameBuilder".to_owned()
+                ),
+                "{input}"
+            );
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn name_with_nested_indices() -> anyhow::Result<()> {
+        let input = name("foo[1][2].bar");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["foo".to_owned(), "bar".to_owned()], "$n[1][2].$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn string_list_value() -> anyhow::Result<()> {
+        let input = value(vec!["foo".to_owned(), "bar".to_owned()]);
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_values(
+                vec![AttributeValue::L(vec![
+                    AttributeValue::S("foo".to_owned()),
+                    AttributeValue::S("bar".to_owned())
+                ])],
+                "$v"
+            ),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn str_list_value() -> anyhow::Result<()> {
+        let input = value(vec!["foo", "bar"]);
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_values(
+                vec![AttributeValue::L(vec![
+                    AttributeValue::S("foo".to_owned()),
+                    AttributeValue::S("bar".to_owned())
+                ])],
+                "$v"
+            ),
         );
 
         Ok(())
@@ -578,7 +687,7 @@ mod tests {
                 .build_operand()
                 .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
                 .unwrap_err(),
-            error::ExpressionError::UnsetParameterError(
+            error::ExpressionError::InvalidParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
             )

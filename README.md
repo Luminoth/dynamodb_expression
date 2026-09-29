@@ -10,7 +10,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-dynamodb_expression = "0.3.0"
+dynamodb_expression = "0.4.0"
 aws-sdk-dynamodb = "1"
 ```
 
@@ -67,47 +67,58 @@ let update = set(name("Status"), value("active"))
 ```rust
 use dynamodb_expression::*;
 
-# tokio_test::block_on(async {
-let shared_config = aws_config::from_env().load().await;
-let client = aws_sdk_dynamodb::Client::new(&shared_config);
+#[tokio::main]
+async fn main() {
+    let shared_config = aws_config::from_env().load().await;
+    let client = aws_sdk_dynamodb::Client::new(&shared_config);
 
-let key_cond = key("PK").equal(value("USER#123"));
-let filter = name("Active").equal(value(true));
-let proj = names_list(name("PK"), vec![name("SK"), name("Name")]);
+    let key_cond = key("PK").equal(value("USER#123"));
+    let filter = name("Active").equal(value(true));
+    let proj = names_list(name("PK"), vec![name("SK"), name("Name")]);
 
-let expr = Builder::new()
-    .with_key_condition(key_cond)
-    .with_filter(filter)
-    .with_projection(proj)
-    .build()
-    .unwrap();
+    let expr = Builder::new()
+        .with_key_condition(key_cond)
+        .with_filter(filter)
+        .with_projection(proj)
+        .build()
+        .expect("failed to build expression");
 
-let result = client.query()
-    .table_name("MyTable")
-    .key_condition_expression(expr.key_condition().cloned().unwrap())
-    .filter_expression(expr.filter().cloned().unwrap())
-    .projection_expression(expr.projection().cloned().unwrap())
-    .set_expression_attribute_names(expr.names().clone())
-    .set_expression_attribute_values(expr.values().clone())
-    .send()
-    .await
-    .unwrap();
-# })
+    let result = client.query()
+        .table_name("MyTable")
+        .key_condition_expression(expr.key_condition().cloned().expect("key condition was set"))
+        .filter_expression(expr.filter().cloned().expect("filter was set"))
+        .projection_expression(expr.projection().cloned().expect("projection was set"))
+        .set_expression_attribute_names(expr.names().clone())
+        .set_expression_attribute_values(expr.values().clone())
+        .send()
+        .await
+        .expect("query failed");
+}
 ```
 
 > **Note:** Always pass both `expression_attribute_names` and `expression_attribute_values` from the built expression — all names and values are aliased automatically.
 
 ## Supported value types
 
-| Rust type | DynamoDB type |
-|-----------|---------------|
-| `bool` | BOOL |
-| `i64` | N |
-| `f64` | N |
-| `&'static str` / `String` | S |
-| `Vec<&'static str>` / `Vec<String>` | SS |
-| `Vec<Box<dyn ValueBuilderImpl>>` | L |
-| `HashMap<String, Box<dyn ValueBuilderImpl>>` | M |
-| `aws_sdk_dynamodb::types::AttributeValue` | any |
+How to produce each DynamoDB type with the Go SDK v2 (`expression.Value(...)`) and with this crate (`value(...)`):
 
-For unsigned integers or other numeric types, use `value(n as i64)` or pass an `AttributeValue` directly.
+| DynamoDB type | Go SDK v2 | Rust |
+|---------------|-----------|------|
+| S (string) | `string` | `&'static str` / `String` |
+| N (number) | `int64`, `float64` (and other numeric types) | `i64`, `f64` |
+| B (binary) | `[]byte` | `AttributeValue::B(Blob::new(...))` |
+| BOOL | `bool` | `bool` |
+| NULL | `nil` | `AttributeValue::Null(true)` |
+| L (list) | `[]string`, `[]any` (any non-byte slice) | `Vec<&'static str>` / `Vec<String>`, `Vec<Box<dyn ValueBuilderImpl>>` |
+| M (map) | `map[string]any` | `HashMap<String, Box<dyn ValueBuilderImpl>>` |
+| SS (string set) | `&types.AttributeValueMemberSS{...}` | `AttributeValue::Ss(...)` |
+| NS (number set) | `&types.AttributeValueMemberNS{...}` | `AttributeValue::Ns(...)` |
+| BS (binary set) | `[][]byte` | `AttributeValue::Bs(...)` |
+
+Any `types.AttributeValue` (Go) or `aws_sdk_dynamodb::types::AttributeValue` (Rust) is passed through unchanged, so the `AttributeValue` forms above work for every type. `Blob` is `aws_sdk_dynamodb::primitives::Blob`.
+
+Neither SDK makes a set from a plain list: a slice or `Vec` of strings is always a list (L). In Go, a struct field tagged `dynamodbav:",stringset"` becomes a set, but only inside a struct, which marshals as M.
+
+Empty `Vec`s and `HashMap`s produce an empty L / M, which is how Go handles empty (non-nil) slices and maps.
+
+For unsigned integers or other numeric types in Rust, cast with `value(n as i64)` or pass `AttributeValue::N(n.to_string())`.

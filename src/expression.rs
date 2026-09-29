@@ -5,16 +5,20 @@ use std::collections::HashMap;
 use anyhow::bail;
 use aws_sdk_dynamodb::types::AttributeValue;
 
-use crate::{ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder};
+use crate::{
+    ConditionBuilder, KeyConditionBuilder, ProjectionBuilder, UpdateBuilder, error::ExpressionError,
+};
 
 /// Specifies the type of Expression. Declaring this type is used
 /// to eliminate magic strings
 #[derive(Copy, Clone, Hash, Eq, PartialEq, PartialOrd, Ord, Debug)]
 pub(crate) enum ExpressionType {
-    Projection,
-    KeyCondition,
+    // variants are in alphabetical order to match the Go SDK, which sorts
+    // expression types by their string names when building aliases
     Condition,
     Filter,
+    KeyCondition,
+    Projection,
     Update,
 }
 
@@ -224,7 +228,7 @@ impl Builder {
     /// Getter methods on the resulting Expression struct returns the
     /// DynamoDB Expression strings as well as the maps that correspond to
     /// ExpressionAttributeNames and ExpressionAttributeValues. Calling build() on an
-    /// empty Builder returns the typed error EmptyParameterError.
+    /// empty Builder returns the typed error UnsetParameterError.
     ///
     /// # Example
     ///
@@ -255,6 +259,13 @@ impl Builder {
     /// # })
     /// ```
     pub fn build(self) -> anyhow::Result<Expression> {
+        if self.expressions.is_empty() {
+            bail!(ExpressionError::UnsetParameterError(
+                "Build".to_owned(),
+                "Builder".to_owned(),
+            ));
+        }
+
         let (alias_list, expressions) = self.build_child_trees()?;
 
         let mut expression = Expression::new(expressions);
@@ -662,6 +673,8 @@ impl ExpressionNode {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use aws_sdk_dynamodb::types::AttributeValue;
 
     use crate::*;
@@ -762,9 +775,6 @@ mod tests {
         Ok(())
     }
 
-    // TODO: not sure if it matters, but this test produces
-    // different results than the Go version, however the
-    // end dynamo outcome is the same for both
     #[test]
     fn compound() -> anyhow::Result<()> {
         let input = Builder::new()
@@ -778,10 +788,10 @@ mod tests {
             input.build()?,
             Expression {
                 expressions: hashmap!(
-                ExpressionType::Condition => "#0 = :1".to_owned(),
-                ExpressionType::Filter => "#1 < :2".to_owned(),
+                ExpressionType::Condition => "#0 = :0".to_owned(),
+                ExpressionType::Filter => "#1 < :1".to_owned(),
                 ExpressionType::Projection => "#0, #1, #2".to_owned(),
-                ExpressionType::KeyCondition => "#0 = :0".to_owned(),
+                ExpressionType::KeyCondition => "#0 = :2".to_owned(),
                 ExpressionType::Update => "SET #0 = :3\n".to_owned()
                 ),
                 names: Some(hashmap!(
@@ -791,11 +801,26 @@ mod tests {
                 )),
                 values: Some(hashmap!(
                     ":0".to_owned() => AttributeValue::N("5".to_owned()),
-                    ":1".to_owned() => AttributeValue::N("5".to_owned()),
-                    ":2".to_owned() => AttributeValue::N("6".to_owned()),
+                    ":1".to_owned() => AttributeValue::N("6".to_owned()),
+                    ":2".to_owned() => AttributeValue::N("5".to_owned()),
                     ":3".to_owned() => AttributeValue::N("5".to_owned())
                 )),
             },
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn unset_builder() -> anyhow::Result<()> {
+        let input = Builder::default();
+
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
         );
 
         Ok(())
@@ -832,7 +857,13 @@ mod tests {
     fn test_condition_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(input.build()?.condition(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }
@@ -850,7 +881,13 @@ mod tests {
     fn test_filter_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(input.build()?.filter(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }
@@ -872,7 +909,13 @@ mod tests {
     fn test_projection_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(input.build()?.projection(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }
@@ -893,7 +936,13 @@ mod tests {
     fn test_key_condition_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(input.build()?.key_condition(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }
@@ -930,7 +979,13 @@ mod tests {
     fn test_update_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(input.build()?.update(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }
@@ -990,14 +1045,14 @@ mod tests {
     }
 
     #[test]
-    fn empty_string_sets_become_null() -> anyhow::Result<()> {
+    fn empty_string_lists_stay_empty() -> anyhow::Result<()> {
         let input =
             Builder::new().with_condition(name("groups").equal(value(Vec::<String>::new())));
 
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue::Null(true)
+                ":0".to_owned() => AttributeValue::L(vec![])
             ))
         );
 
@@ -1005,14 +1060,30 @@ mod tests {
     }
 
     #[test]
-    fn empty_lists_become_null() -> anyhow::Result<()> {
+    fn empty_lists_stay_empty() -> anyhow::Result<()> {
         let input = Builder::new()
             .with_condition(name("groups").equal(value(Vec::<Box<dyn ValueBuilderImpl>>::new())));
 
         assert_eq!(
             *input.build()?.values(),
             Some(hashmap!(
-                ":0".to_owned() => AttributeValue::Null(true)
+                ":0".to_owned() => AttributeValue::L(vec![])
+            ))
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn empty_maps_stay_empty() -> anyhow::Result<()> {
+        let input = Builder::new().with_condition(
+            name("groups").equal(value(HashMap::<String, Box<dyn ValueBuilderImpl>>::new())),
+        );
+
+        assert_eq!(
+            *input.build()?.values(),
+            Some(hashmap!(
+                ":0".to_owned() => AttributeValue::M(HashMap::new())
             ))
         );
 
@@ -1070,7 +1141,13 @@ mod tests {
     fn values_unset() -> anyhow::Result<()> {
         let input = Builder::new();
 
-        assert_eq!(*input.build()?.values(), None);
+        assert_eq!(
+            input
+                .build()
+                .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
+                .unwrap_err(),
+            error::ExpressionError::UnsetParameterError("Build".to_owned(), "Builder".to_owned())
+        );
 
         Ok(())
     }

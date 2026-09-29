@@ -32,7 +32,7 @@ The pipeline has three stages:
 
 3. **`build_expression_string()`** walks the node tree and resolves escape sequences against an `AliasList`, producing the final expression string and populating `ExpressionAttributeNames` / `ExpressionAttributeValues`.
 
-`AliasList` deduplicates **names** (same attribute name reuses the same `#N` alias) but does **not** deduplicate values (each value gets a fresh `:N` alias). This matches Go SDK behavior. A known side effect: the compound expression test in `expression.rs` produces different value alias numbering than the Go SDK, but DynamoDB evaluates both identically.
+`AliasList` deduplicates **names** (same attribute name reuses the same `#N` alias) but does **not** deduplicate values (each value gets a fresh `:N` alias). This matches Go SDK behavior.
 
 ## Key design patterns
 
@@ -44,7 +44,7 @@ The pipeline has three stages:
 
 **`OperationMode` / `ConditionMode` / `KeyConditionMode` enums drive dispatch.** Each mode corresponds to a DynamoDB expression construct. `Unset` is the `Default` and triggers `UnsetParameterError` when `build_tree()` is called on an uninitialized builder. `Invalid` (used only in `KeyConditionMode`) encodes a structurally impossible key condition detected at construction time.
 
-**`ExpressionType` ordering is deterministic.** `build_child_trees()` sorts expression types before building so that `AliasList` alias numbering is stable across runs. This matters for tests that assert on specific alias values like `#0`, `:1`.
+**`ExpressionType` ordering is deterministic.** `build_child_trees()` sorts expression types before building so that `AliasList` alias numbering is stable across runs. The `ExpressionType` variants are declared alphabetically because Go sorts expression types by their string names; keep that order so alias numbering matches Go. This matters for tests that assert on specific alias values like `#0`, `:1`.
 
 ## Error handling
 
@@ -70,5 +70,4 @@ All public functions return `anyhow::Result<T>`. Tests downcast with `.map_err(|
 
 - `Builder::new()` exists alongside `Builder::default()` (redundant; Go has no `Default` trait).
 - `and()` / `or()` are binary rather than variadic (Go accepts `...ConditionBuilder`); see TODO.md.
-- Empty `Vec` / `HashMap` values produce `AttributeValue::Null(true)` rather than an error, matching observed Go behavior.
 - `value()` accepts `&'static str` rather than any `&str`; use `String` / `.to_owned()` for runtime strings.

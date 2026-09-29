@@ -17,30 +17,11 @@
 - Error strings are duplicated between source and tests (copy/paste); share them via constants
   or helper functions
 - The commented-out test `list_append_list_and_name` in `update.rs` needs a solution — `Vec<i64>`
-  has no `impl_value_builder!` impl, so `value(vec![1, 2, 3])` does not compile
-- The `compound` test in `expression.rs` notes that attribute value aliases come out in a different
-  order than the Go SDK. Root cause: Go sorts `expressionType` by its string value (`condition`,
-  `filter`, `keyCondition`, `projection`, `update`), but the Rust `ExpressionType` enum derives `Ord`
-  in declaration order (`Projection`, `KeyCondition`, `Condition`, ...). Reordering the enum variants
-  alphabetically should make the test match Go exactly
+  has no `impl_value_builder!` impl, so `value(vec![1, 2, 3])` does not compile. The test body also
+  uses the old `AttributeValue { n: Some(..), .. }` struct syntax and needs rewriting for the
+  current `AttributeValue` enum
 
 ## Go SDK v2 parity
-
-Behavior differences:
-
-- `NameBuilder::build_operand` returns `UnsetParameterError` for empty path segments (`foo..bar`,
-  `foo.`) and `[foo]`; Go (v1 and v2) returns `InvalidParameterError` for these. Only the fully
-  empty name (`name("")`) should be `UnsetParameterError`
-- v2 validates list index brackets in names: mismatched (`foo[`, `foo]`, `foo]1[`), empty (`foo[]`)
-  and non-numeric (`foo[a]`) indexes are `InvalidParameterError`. Rust currently accepts these and
-  emits a bad expression or a bogus attribute name
-- `Builder::default().build()` succeeds with an empty `Expression`; Go returns
-  `UnsetParameterError("Build", "Builder")`
-- Empty collections: v2 marshals a non-nil empty slice/map as an empty `L` / `M` (and empty sets as
-  empty `SS`/`NS`/`BS` unless `NullEmptySets` is set); only nil slices/maps become `NULL`. The
-  current `Null(true)` behavior matches v1's default (`EnableEmptyCollections: false`), not v2
-- `Vec<String>` / `Vec<&str>` become `SS`, but Go marshals `[]string` as a list (`L`); a string set
-  needs a `stringset` struct tag. Decide whether to keep this as a documented divergence
 
 Missing v2 API:
 
@@ -51,7 +32,3 @@ Missing v2 API:
   in v2, so `name_no_dot_split("a.b")` is a single attribute literally named `a.b`)
 - `value_with_options()` / `ValueBuilderOptions` (attributevalue encoder options); probably not
   applicable without a marshaller, but worth an explicit decision
-
-## Infrastructure
-
-- Set up GitHub Actions CI

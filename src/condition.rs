@@ -2198,7 +2198,7 @@ mod tests {
                 .build_tree()
                 .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
                 .unwrap_err(),
-            error::ExpressionError::UnsetParameterError(
+            error::ExpressionError::InvalidParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
             )
@@ -2291,7 +2291,7 @@ mod tests {
                 .build_tree()
                 .map_err(|e| e.downcast::<error::ExpressionError>().unwrap())
                 .unwrap_err(),
-            error::ExpressionError::UnsetParameterError(
+            error::ExpressionError::InvalidParameterError(
                 "BuildOperand".to_owned(),
                 "NameBuilder".to_owned()
             )

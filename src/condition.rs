@@ -1,4 +1,4 @@
-//! Ported from [condition.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/condition.go)
+//! Ported from [condition.go](https://github.com/aws/aws-sdk-go-v2/blob/main/feature/dynamodb/expression/condition.go)
 
 use anyhow::bail;
 

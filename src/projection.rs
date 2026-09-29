@@ -1,4 +1,4 @@
-//! Ported from [projection.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/projection.go)
+//! Ported from [projection.go](https://github.com/aws/aws-sdk-go-v2/blob/main/feature/dynamodb/expression/projection.go)
 
 use anyhow::bail;
 

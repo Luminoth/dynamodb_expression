@@ -1,4 +1,4 @@
-//! Ported from [error.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/error.go)
+//! Ported from [error.go](https://github.com/aws/aws-sdk-go-v2/blob/main/feature/dynamodb/expression/error.go)
 
 /// Represents a DynamoDB Expression Error
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]

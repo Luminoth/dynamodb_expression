@@ -1,4 +1,4 @@
-//! Ported from [expression.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/expression.go)
+//! Ported from [expression.go](https://github.com/aws/aws-sdk-go-v2/blob/main/feature/dynamodb/expression/expression.go)
 
 use std::collections::HashMap;
 

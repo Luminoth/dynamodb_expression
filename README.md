@@ -1,6 +1,6 @@
 # DynamoDB Expression
 
-Port of [Go DynamoDB Expressions](https://github.com/aws/aws-sdk-go/tree/master/service/dynamodb/expression) to Rust.
+Port of [Go v2 DynamoDB Expressions](https://github.com/aws/aws-sdk-go-v2/tree/main/feature/dynamodb/expression) to Rust.
 
 Provides builders for all DynamoDB expression types: condition, filter, key condition, projection, and update.
 

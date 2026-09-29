@@ -2,7 +2,7 @@
 
 ## Project goal
 
-This is a Rust port of the [AWS SDK for Go DynamoDB Expression Builder](https://github.com/aws/aws-sdk-go/tree/master/service/dynamodb/expression).
+This is a Rust port of the [AWS SDK for Go v2 DynamoDB Expression Builder](https://github.com/aws/aws-sdk-go-v2/tree/main/feature/dynamodb/expression).
 
 **Fidelity to the Go source is the primary constraint.** When in doubt about naming, parameter order, behavior, or doc text, check the Go source first. The Rust API should feel idiomatic Rust while staying as close to the Go design as possible. Divergences should be intentional and documented.
 

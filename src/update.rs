@@ -1,4 +1,4 @@
-//! Ported from [update.go](https://github.com/aws/aws-sdk-go/blob/master/service/dynamodb/expression/update.go)
+//! Ported from [update.go](https://github.com/aws/aws-sdk-go-v2/blob/main/feature/dynamodb/expression/update.go)
 
 use std::collections::HashMap;
 use std::fmt::Write;

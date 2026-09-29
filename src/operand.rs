@@ -187,7 +187,7 @@ impl OperandBuilder for NameBuilder {
             }
 
             let mut substr = "";
-            if word.chars().nth(word.len() - 1).unwrap() == ']' {
+            if word.ends_with(']') {
                 for (j, ch) in word.char_indices() {
                     if ch == '[' {
                         substr = &word[j..];
@@ -399,6 +399,30 @@ mod tests {
         assert_eq!(
             input.build_operand()?.expression_node,
             ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn non_ascii_name() -> anyhow::Result<()> {
+        let input = name("café");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["café".to_owned()], "$n"),
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn non_ascii_name_with_index() -> anyhow::Result<()> {
+        let input = name("café[0]");
+
+        assert_eq!(
+            input.build_operand()?.expression_node,
+            ExpressionNode::from_names(vec!["café".to_owned()], "$n[0]"),
         );
 
         Ok(())

@@ -684,7 +684,7 @@ pub fn between(
 /// // condition represents the condition where the value of the item
 /// // attribute "Color" is checked against the list of colors "red",
 /// // "green", and "blue".
-/// let condition = r#in(name("Color"), vec![value("red"), value("green"), value("blue")]);
+/// let condition = r#in(name("Color"), value("red"), vec![value("green"), value("blue")]);
 ///
 /// // Used in another Condition Expression
 /// let another_condition = not(condition);
@@ -693,10 +693,11 @@ pub fn between(
 /// ```
 pub fn r#in(
     left: Box<dyn OperandBuilder>,
-    mut right: Vec<Box<dyn OperandBuilder>>,
+    right: Box<dyn OperandBuilder>,
+    mut other: Vec<Box<dyn OperandBuilder>>,
 ) -> ConditionBuilder {
-    let mut operand_list = vec![left];
-    operand_list.append(&mut right);
+    let mut operand_list = vec![left, right];
+    operand_list.append(&mut other);
 
     ConditionBuilder {
         operand_list,
@@ -1295,7 +1296,7 @@ pub trait InBuilder: OperandBuilder {
     /// // condition represents the condition where the value of the item
     /// // attribute "Color" is checked against the list of colors "red",
     /// // "green", and "blue".
-    /// let condition = name("Color").r#in(vec![value("red"), value("green"), value("blue")]);
+    /// let condition = name("Color").r#in(value("red"), vec![value("green"), value("blue")]);
     ///
     /// // Used in another Condition Expression
     /// let another_condition = not(condition);
@@ -1311,7 +1312,7 @@ pub trait InBuilder: OperandBuilder {
     /// // condition represents the condition where the value of the item
     /// // attribute "Color" is checked against the list of colors "red",
     /// // "green", and "blue".
-    /// let condition = value("yellow").r#in(vec![value("red"), value("green"), value("blue")]);
+    /// let condition = value("yellow").r#in(value("red"), vec![value("green"), value("blue")]);
     ///
     /// // Used in another Condition Expression
     /// let another_condition = not(condition);
@@ -1327,18 +1328,22 @@ pub trait InBuilder: OperandBuilder {
     /// // condition represents the condition where the value of the item
     /// // attribute "Color" is checked against the list of colors "red",
     /// // "green", and "blue".
-    /// let condition = size(name("Donuts")).r#in(vec![value(12), value(24), value(36)]);
+    /// let condition = size(name("Donuts")).r#in(value(12), vec![value(24), value(36)]);
     ///
     /// // Used in another Condition Expression
     /// let another_condition = not(condition);
     /// // Used to make an Builder
     /// let builder = Builder::new().with_condition(another_condition);
     /// ```
-    fn r#in(self: Box<Self>, right: Vec<Box<dyn OperandBuilder>>) -> ConditionBuilder
+    fn r#in(
+        self: Box<Self>,
+        right: Box<dyn OperandBuilder>,
+        other: Vec<Box<dyn OperandBuilder>>,
+    ) -> ConditionBuilder
     where
         Self: Sized + 'static,
     {
-        r#in(self, right)
+        r#in(self, right, other)
     }
 }
 
@@ -2204,7 +2209,7 @@ mod tests {
 
     #[test]
     fn basic_method_in_for_name() -> anyhow::Result<()> {
-        let input = name("foo").r#in(vec![value(5), value(7)]);
+        let input = name("foo").r#in(value(5), vec![value(7)]);
 
         assert_eq!(
             input.build_tree()?,
@@ -2223,7 +2228,7 @@ mod tests {
 
     #[test]
     fn basic_method_in_for_value() -> anyhow::Result<()> {
-        let input = value(6).r#in(vec![value(5), value(7)]);
+        let input = value(6).r#in(value(5), vec![value(7)]);
 
         assert_eq!(
             input.build_tree()?,
@@ -2242,7 +2247,7 @@ mod tests {
 
     #[test]
     fn basic_method_in_for_size() -> anyhow::Result<()> {
-        let input = name("foo").size().r#in(vec![value(5), value(7)]);
+        let input = name("foo").size().r#in(value(5), vec![value(7)]);
 
         assert_eq!(
             input.build_tree()?,
@@ -2260,8 +2265,26 @@ mod tests {
     }
 
     #[test]
+    fn single_operand_in() -> anyhow::Result<()> {
+        let input = r#in(name("foo"), value(5), vec![]);
+
+        assert_eq!(
+            input.build_tree()?,
+            ExpressionNode::from_children_expression(
+                vec![
+                    ExpressionNode::from_names(vec!["foo".to_owned()], "$n"),
+                    ExpressionNode::from_values(vec![AttributeValue::N("5".to_owned())], "$v")
+                ],
+                "$c IN ($c)"
+            )
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn invalid_operand_error_in() -> anyhow::Result<()> {
-        let input = name("[5]").r#in(vec![value(3), name("foo..bar")]);
+        let input = name("[5]").r#in(value(3), vec![name("foo..bar")]);
 
         assert_eq!(
             input

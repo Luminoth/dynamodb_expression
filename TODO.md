@@ -26,13 +26,6 @@
 
 ## Go SDK v2 parity
 
-Bugs:
-
-- `NameBuilder::build_operand` panics on non-ASCII names (e.g. `name("café")`):
-  `word.chars().nth(word.len() - 1)` mixes byte length with char index. Use `word.ends_with(']')`
-- `r#in(left, vec![])` panics (`operand_list.len() - 2` underflows). Go's signature requires at
-  least one right operand; either take `(left, right, others)` or return an error
-
 Behavior differences:
 
 - `NameBuilder::build_operand` returns `UnsetParameterError` for empty path segments (`foo..bar`,

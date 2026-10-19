@@ -66,6 +66,12 @@ All public functions return `anyhow::Result<T>`. Tests downcast with `.map_err(|
 
 `between` / `key_between` take `(lower, upper)` in that order — lower bound first, upper bound second. This matches the Go SDK (`Between(op, lower, upper)` / `KeyBetween(key, lower, upper)`). The DynamoDB expression produced is `operand BETWEEN lower AND upper`.
 
+## Git workflow
+
+- Never commit until the user has reviewed the changes and explicitly asked for a commit. A request to fix or resolve something is not a request to commit; make the change, test it, and leave it uncommitted for review.
+- When asked to commit, commit directly on `master`; don't create a feature branch.
+- Don't push unless asked.
+
 ## Known intentional divergences from Go
 
 - `Builder::new()` exists alongside `Builder::default()` (redundant; Go has no `Default` trait).
